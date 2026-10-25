@@ -3,6 +3,7 @@
 //   status "answered"        the LLM wrote an answer grounded in the retrieved sources
 //   status "no_match"        nothing on the site is close enough; no LLM call is made
 //   status "retrieval_only"  sources found, but no LLM key is configured yet
+//   status "policy"          salary / notice-period questions get a fixed pointer to email
 //   status "rate_limited" | "invalid"
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -10,7 +11,10 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 const ALLOWED_ORIGINS = [/^https:\/\/ankurray1\.github\.io$/, /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/];
 const MAX_QUESTION = 500;
 const PER_HOUR = 20;
-const MIN_SIMILARITY = 0.78; // tuned against the eval set; below this a chunk is not about the question
+// Tuned on the test questions: genuine questions score >= 0.838, off-topic ones <= 0.798.
+const GATE_SIMILARITY = 0.815; // the best match must reach this, or the site does not cover the question
+const MIN_SIMILARITY = 0.76;   // weaker chunks (e.g. keyword-only matches) are left out of the context
+const POLICY = /\b(salary|ctc|compensation|pay\s*package|expected\s+pay|notice\s+period|current\s+pay)\b/i;
 const TOP_K = 6;
 const MODEL = 'gpt-4o-mini';
 const CONTACT = 'john.ankur.ray@gmail.com';
@@ -62,6 +66,11 @@ Deno.serve(async (req) => {
   if (rateErr) return reply({ status: 'error', error: 'Something went wrong. Please try again.' }, 500);
   if (!allowed) return reply({ status: 'rate_limited', answer: `You've asked a lot of questions this hour. Please try again later, or email ${CONTACT}.`, sources: [] }, 429);
 
+  // compensation and notice period are for a direct conversation, not the site assistant
+  if (POLICY.test(question) && !/salary revision/i.test(question)) {
+    return reply({ status: 'policy', answer: `Salary, notice period and similar details are best discussed with Ankur directly. Please email ${CONTACT}.`, sources: [] });
+  }
+
   // every question is about Ankur, so his name and pronouns carry no signal; searching on them
   // pulls generic "about" chunks above the real evidence
   const searchText = question.replace(/\b(ankur(\s+ray)?|ray)('s)?\b|\b(he|him|his|he's|himself)\b/gi, ' ').replace(/\s+/g, ' ').trim() || question;
@@ -70,11 +79,12 @@ Deno.serve(async (req) => {
   const embedding = await model.run(searchText, { mean_pool: true, normalize: true });
   const { data: matches, error: matchErr } = await db.rpc('hybrid_kb', { query_text: searchText, query_embedding: JSON.stringify(embedding), match_count: TOP_K, min_similarity: MIN_SIMILARITY });
   if (matchErr) return reply({ status: 'error', error: 'Something went wrong. Please try again.' }, 500);
-  const hits = (matches ?? []) as { id: string; title: string; section: string; url: string; content: string; similarity: number }[];
+  const all = (matches ?? []) as { id: string; title: string; section: string; url: string; content: string; similarity: number }[];
+  const hits = all.filter((h) => h.similarity >= MIN_SIMILARITY);
   const sources = hits.map((h, n) => ({ n: n + 1, title: h.title, section: h.section, url: h.url, similarity: Math.round(h.similarity * 1000) / 1000 }));
 
-  // retrieval gate: unless at least one chunk is semantically close, the site does not cover this; never ask the LLM
-  if (!hits.some((h) => h.similarity >= MIN_SIMILARITY)) {
+  // retrieval gate: unless the best chunk is semantically close, the site does not cover this; never ask the LLM
+  if (!hits.some((h) => h.similarity >= GATE_SIMILARITY)) {
     return reply({ status: 'no_match', answer: `That isn't covered on Ankur's site. You can ask about his product work, AI projects, experience or skills, or email ${CONTACT}.`, sources: [] });
   }
 

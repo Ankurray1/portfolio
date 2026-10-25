@@ -8,6 +8,16 @@ const A = '<script type="application/json" id="state">', B = '</script><script i
 const st = JSON.parse(html.slice(html.indexOf(A) + A.length, html.indexOf(B)));
 
 const MAX = 1600; // gte-small reads at most 512 tokens; ~1,600 characters stays inside that
+/* first-person case titles often omit the topic a visitor searches for ("Copilot", "ADP"),
+   so every chunk of a case carries a short topic tag in its header */
+const TOPIC = {
+  '#case/copilot-agent-wipro': 'Microsoft 365 Copilot agent for Wipro, 0 to 1 launch',
+  '#case/aidlc-catalogue-merge': 'AI-DLC, AI prototyping with Claude Code and Google Stitch',
+  '#case/teams-adoption-metrics': 'Microsoft Teams integration MAU growth, product analytics',
+  '#case/ai-evaluation-practice': 'AI evals, LLM evaluation dataset',
+  '#case/platform-integrations': 'Integrations with Teams, Slack, WhatsApp, Copilot and Knit HRIS APIs',
+  '#case/adp-business-analyst': 'ADP India, US payroll Business Analyst'
+};
 const chunks = [];
 const clean = s => String(s || '').replace(/\s+/g, ' ').replace(/\s([.,;:])/g, '$1').trim();
 /* flatten any block or value to readable text, skipping images, links-only fields and layout keys */
@@ -23,7 +33,7 @@ const text = v => {
 const add = (kind, title, url, body, section) => {
   body = clean(body);
   if (!body) return;
-  const head = clean(title + (section ? ' — ' + section : ''));
+  const head = clean(title + (TOPIC[url] ? ' (' + TOPIC[url] + ')' : '') + (section ? ' — ' + section : ''));
   /* split long sections on sentence boundaries so every chunk embeds whole */
   const parts = [];
   let cur = '';
