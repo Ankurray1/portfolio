@@ -1,14 +1,14 @@
 {
- "built": "2026-10-25T14:27:38.157Z",
+ "built": "2026-10-25T14:35:58.690Z",
  "count": 221,
  "chunks": [
   {
    "id": "profile::main",
    "kind": "profile",
-   "title": "About Ankur Ray",
+   "title": "Profile summary",
    "section": "",
    "url": "#",
-   "content": "About Ankur Ray\nAI Product Manager · B2B SaaS · 4 years, 2 in product I'm a product manager who takes AI products from idea to enterprise adoption. At Vantage Circle I led a Microsoft 365 Copilot agent from 0→1, reaching 200+ MAU in its first two weeks at Wipro, and ran the full PM loop behind it: discovery, roadmaps, PRDs, AI evals and launch. I also contributed to growing a platform from 35K to 150K monthly users. Before product, I spent two years as a Business Analyst at ADP on US enterprise payroll: 401(k), benefit and garnishment reporting and vendor file integrations for a Fortune 500 portfolio, where every requirement had to reconcile with the payroll register. As the co-founder of a creative studio, I learned ownership the hard way: find the story, build it with a small team and ship it, all the way to a documentary on international streaming. Choose a track below to see how I discover, build and ship. 4 years in B2B SaaS: 2 as a Product Manager in AI & integrations, 2 as a Business Analyst in US payroll Location: India LinkedIn headline: AI Product Manager | US Payroll | 0→1 Roadmap Delivery, Metric & Adoption | AI & B2B SaaS | LLMs & AI Evals Email: john.ankur.ray@gmail.com"
+   "content": "Profile summary\nAI Product Manager · B2B SaaS · 4 years, 2 in product I'm a product manager who takes AI products from idea to enterprise adoption. At Vantage Circle I led a Microsoft 365 Copilot agent from 0→1, reaching 200+ MAU in its first two weeks at Wipro, and ran the full PM loop behind it: discovery, roadmaps, PRDs, AI evals and launch. I also contributed to growing a platform from 35K to 150K monthly users. Before product, I spent two years as a Business Analyst at ADP on US enterprise payroll: 401(k), benefit and garnishment reporting and vendor file integrations for a Fortune 500 portfolio, where every requirement had to reconcile with the payroll register. As the co-founder of a creative studio, I learned ownership the hard way: find the story, build it with a small team and ship it, all the way to a documentary on international streaming. Choose a track below to see how I discover, build and ship. 4 years in B2B SaaS: 2 as a Product Manager in AI & integrations, 2 as a Business Analyst in US payroll Location: India LinkedIn headline: AI Product Manager | US Payroll | 0→1 Roadmap Delivery, Metric & Adoption | AI & B2B SaaS | LLMs & AI Evals Email: john.ankur.ray@gmail.com"
   },
   {
    "id": "profile::main-2",
@@ -85,10 +85,10 @@
   {
    "id": "pm:pm:main-5",
    "kind": "pm",
-   "title": "Who Ankur builds with",
+   "title": "Teams and roles collaborated with",
    "section": "",
    "url": "#pm",
-   "content": "Who Ankur builds with\nLeadership: CEO, AVP of Product, Directors. Product & build: Product Managers, Team Leads, Developers, QA Engineers, UX/UI Designers. Go-to-market: Product Marketing Managers, Sales Managers, Customer Success Managers, Legal Counsel. Clients & partners: Enterprise Client Stakeholders, Microsoft CAPE Team, Microsoft Validation Team"
+   "content": "Teams and roles collaborated with\nLeadership: CEO, AVP of Product, Directors. Product & build: Product Managers, Team Leads, Developers, QA Engineers, UX/UI Designers. Go-to-market: Product Marketing Managers, Sales Managers, Customer Success Managers, Legal Counsel. Clients & partners: Enterprise Client Stakeholders, Microsoft CAPE Team, Microsoft Validation Team"
   },
   {
    "id": "pm:pm:main-6",
@@ -101,10 +101,10 @@
   {
    "id": "people:pm:main",
    "kind": "people",
-   "title": "People Ankur has worked with",
+   "title": "People worked with: names and roles",
    "section": "",
    "url": "#pm",
-   "content": "People Ankur has worked with\nNayanjyoti Bhuyan, AVP of Product at Vantage Circle; Partha Neog, CEO at Vantage Circle; Atif Ayubi, Director of Client Success at Vantage Circle; Bhaskar Ballabh Saikia, Product Marketing Manager at Google; Deepjyoti Saha, Senior Product Manager at Microsoft; Shwetha Sridharan, Senior Product Manager at Microsoft; Goutam Borthakur at Vantage Circle; Subhendu Gogoi at Vantage Circle; Sagarika Dev Roy, Platform UI Architect, Frontend at Vantage Circle."
+   "content": "People worked with: names and roles\nNayanjyoti Bhuyan, AVP of Product at Vantage Circle; Partha Neog, CEO at Vantage Circle; Atif Ayubi, Director of Client Success at Vantage Circle; Bhaskar Ballabh Saikia, Product Marketing Manager at Google; Deepjyoti Saha, Senior Product Manager at Microsoft; Shwetha Sridharan, Senior Product Manager at Microsoft; Goutam Borthakur at Vantage Circle; Subhendu Gogoi at Vantage Circle; Sagarika Dev Roy, Platform UI Architect, Frontend at Vantage Circle."
   },
   {
    "id": "testimonial:pm:main",

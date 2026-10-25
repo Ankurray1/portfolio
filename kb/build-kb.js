@@ -53,7 +53,7 @@ const addDoc = (kind, title, url, blocks) => {
 
 /* profile and home page */
 const p = st.profile;
-add('profile', 'About Ankur Ray', '#', [p.role, p.intro, p.facts, 'Location: ' + p.location, 'LinkedIn headline: ' + p.liHeadline, 'Email: ' + p.email].join(' '));
+add('profile', 'Profile summary', '#', [p.role, p.intro, p.facts, 'Location: ' + p.location, 'LinkedIn headline: ' + p.liHeadline, 'Email: ' + p.email].join(' '));
 add('profile', 'Background at a glance', '#', 'Organisations: ' + String(p.orgs || '').split('\n').map(l => l.split('|').slice(0, 2).join(', ')).join('; '));
 (st.highlights || []).filter(h => h.on !== false).forEach(h => add('highlight', clean(h.title || 'Highlight'), '#', text(h)));
 
@@ -63,9 +63,9 @@ add('pm', 'Product career overview', '#pm', [pm.headline + ' ' + pm.italic + '.'
 add('pm', 'Headline numbers', '#pm', String(pm.stats || '').split('\n').map(l => l.split('|').slice(0, 3).map(x => x.trim()).join(' ')).join('. '));
 add('pm', pm.aboutTitle || 'Working with Microsoft', '#pm', pm.about);
 add('pm', 'Skills', '#pm', 'Skills: ' + pm.skills + '.');
-add('pm', 'Who Ankur builds with', '#pm', String(pm.people || '').replace(/\n/g, '. '));
+add('pm', 'Teams and roles collaborated with', '#pm', String(pm.people || '').replace(/\n/g, '. '));
 add('pm', 'Clients', '#pm', text(pm.clients) + ' ' + (pm.clientsNote || '') + ' Client logos: ' + (pm.clientLogos || []).join(', ') + '.');
-add('people', "People Ankur has worked with", '#pm', (pm.peopleLinks || []).filter(x => x.name).map(x => x.name + (x.role ? ', ' + x.role : '') + (x.org ? ' at ' + x.org : '')).join('; ') + '.');
+add('people', 'People worked with: names and roles', '#pm', (pm.peopleLinks || []).filter(x => x.name).map(x => x.name + (x.role ? ', ' + x.role : '') + (x.org ? ' at ' + x.org : '')).join('; ') + '.');
 (pm.peopleLinks || []).filter(x => x.quote && x.quote.text).forEach(x => add('testimonial', 'Testimonial from ' + x.name, '#pm', '"' + x.quote.text + '" — ' + x.quote.by + ', ' + x.quote.role + '.'));
 
 /* case study cards: hidden ones are not on the site, so they are not in the knowledge base */
