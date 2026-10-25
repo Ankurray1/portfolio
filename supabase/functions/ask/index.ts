@@ -44,7 +44,7 @@ Rules you must always follow:
 9. Copy every number, year, duration and title exactly as a source states it. Never merge two different figures into one: total years of experience and years as a product manager are different facts.
 10. Do not add praise or intensity words the sources do not use (for example "extensively", "strong", "expert").
 11. Earlier turns of the chat are only there to understand follow-up questions; facts still come only from the SOURCES.
-12. Be concise: at most about 200 words. Use short bullets for lists; for a job-fit question, use the bold labels **Matches** and **Gaps**.`;
+12. Always give a crisp, concise, directly relevant answer. Use a small table for comparisons, bullets for lists, and otherwise 1–3 short sentences. Include only the information needed to answer; omit preambles and extra context. For job-fit questions, use the bold labels **Matches** and **Gaps**.`;
 
 const cors = (origin: string | null) => ({
   'Access-Control-Allow-Origin': origin && ALLOWED_ORIGINS.some((r) => r.test(origin)) ? origin : 'https://ankurray1.github.io',
