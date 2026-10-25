@@ -16,6 +16,8 @@ const GATE_SIMILARITY = 0.815; // the best match must reach this, or the site do
 const MIN_SIMILARITY = 0.76;   // weaker chunks (e.g. keyword-only matches) are left out of the context
 const POLICY = /\b(salary|ctc|compensation|pay\s*package|expected\s+pay|notice\s+period|current\s+pay)\b/i;
 const TOP_K = 6;
+const CANDIDATES = 16; // fetched before diversifying
+const PER_PAGE = 2;    // at most this many chunks from one page, so answers can draw on several projects
 const MODEL = 'gpt-4o-mini';
 const CONTACT = 'john.ankur.ray@gmail.com';
 
@@ -77,10 +79,15 @@ Deno.serve(async (req) => {
 
   // retrieve: hybrid search (vector similarity + full-text keywords, merged by reciprocal rank fusion)
   const embedding = await model.run(searchText, { mean_pool: true, normalize: true });
-  const { data: matches, error: matchErr } = await db.rpc('hybrid_kb', { query_text: searchText, query_embedding: JSON.stringify(embedding), match_count: TOP_K, min_similarity: MIN_SIMILARITY });
+  const { data: matches, error: matchErr } = await db.rpc('hybrid_kb', { query_text: searchText, query_embedding: JSON.stringify(embedding), match_count: CANDIDATES, min_similarity: MIN_SIMILARITY });
   if (matchErr) return reply({ status: 'error', error: 'Something went wrong. Please try again.' }, 500);
   const all = (matches ?? []) as { id: string; title: string; section: string; url: string; content: string; similarity: number }[];
-  const hits = all.filter((h) => h.similarity >= MIN_SIMILARITY);
+  const perPage = new Map<string, number>();
+  const hits = all.filter((h) => h.similarity >= MIN_SIMILARITY).filter((h) => {
+    const n = perPage.get(h.url) ?? 0;
+    perPage.set(h.url, n + 1);
+    return n < PER_PAGE;
+  }).slice(0, TOP_K);
   const sources = hits.map((h, n) => ({ n: n + 1, title: h.title, section: h.section, url: h.url, similarity: Math.round(h.similarity * 1000) / 1000 }));
 
   // retrieval gate: unless the best chunk is semantically close, the site does not cover this; never ask the LLM
