@@ -2382,7 +2382,7 @@ async function askLive(q){
   p.innerHTML=head+'<div class="bubble q">'+esc(question)+'</div>'+file+'<div class="bubble a ask-wait" aria-live="polite"><span class="ask-dots" aria-hidden="true"><i></i><i></i><i></i></span>Searching Ankur’s site…</div>';
   p.hidden=false;askFocus(true);
   let j=null;
-  try{const res=await fetch(ASK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question,jobDescription:jd})});j=await res.json()}catch(err){j=null}
+  try{const res=await fetch(ASK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question,jobDescription:jd,jobDescriptionPages:askPdf?.pages||0})});j=await res.json()}catch(err){j=null}
   if(id!==askSeq)return;
   const mail=state.profile.email?', or write to <span class="sel">'+esc(state.profile.email)+'</span>':'';
   const onSite=/github\.io$|^(localhost|127\.0\.0\.1)$/.test(location.hostname);
