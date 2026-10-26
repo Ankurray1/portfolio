@@ -1400,9 +1400,10 @@ document.addEventListener('mouseout',e=>{
   const t=e.target.closest('[data-cv-toggle]'); if(!t||t.contains(e.relatedTarget)) return;
   clearTimeout(cvTimer); if($('#cv-form')?.hidden) t.classList.remove('filling','full');
 });
-/* resolves 'sent', 'limited' or 'failed' */
+/* resolves 'sent', 'limited', 'failed' or 'offsite' (a preview that cannot reach the backend) */
 async function sendCvRequest(email,hp){
   if(!CV_ENDPOINT) return 'failed';
+  if(!/github\.io$|^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return 'offsite';
   const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(),15000);
   try{
     const r=await fetch(CV_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},signal:ctl.signal,
@@ -1413,7 +1414,10 @@ async function sendCvRequest(email,hp){
 }
 function cvDone(email,res){
   const d=$('#detail');
-  d.innerHTML='<div class="cv-pop" role="status">'+(res==='sent'
+  d.innerHTML='<div class="cv-pop" role="status">'+(res==='offsite'
+    ?'<span class="cv-ic">'+SPARK+'</span><h3>Request your CV on the live site</h3><p>This is a preview copy, so requests can\'t be sent from here. <a href="'+LIVE_SITE+'" target="_blank" rel="noopener">Open ankurray1.github.io</a> and use View CV there, or write to Ankur directly:</p>'+
+     '<div class="cv-copy"><span class="sel">'+CV_TO+'</span><button type="button" class="see3" data-copy="'+CV_TO+'">Copy</button></div>'
+    :res==='sent'
     ?'<span class="cv-ic ok">'+SPARK+'</span><h3>Thank you for requesting!</h3><p>You will receive an email from Ankur with his CV at <b>'+esc(email)+'</b> in the next 5–10 minutes.</p><p class="cv-note">Can\'t see it? Check your spam or promotions folder.</p>'
     :'<span class="cv-ic">'+SPARK+'</span><h3>'+(res==='limited'?'You\'ve already asked a few times':'Your request didn\'t go through')+'</h3><p>'+(res==='limited'?'Ankur has your earlier request. If you need it sooner, write to him directly:':'Please try again in a moment, or write to Ankur directly and he will send his CV:')+'</p>'+
      '<div class="cv-copy"><span class="sel">'+CV_TO+'</span><button type="button" class="see3" data-copy="'+CV_TO+'">Copy</button></div>')+
