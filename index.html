@@ -1140,7 +1140,7 @@ footer.foot .chip{margin-left:auto}
 .ask-soon .ask-soon-cta{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:38px;padding:0 14px;border:1px solid color-mix(in srgb,#4A93B2 30%,var(--line));border-radius:999px;background:color-mix(in srgb,#4A93B2 8%,var(--surface));color:#2F6F8A;font:500 10px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
 @media(max-width:560px){.ask-soon .ask-soon-title{font-size:13px}.ask-soon-copy{font-size:12px}.ask-soon .ask-soon-cta{height:34px;padding-inline:10px;font-size:9px}}
 @media(prefers-reduced-motion:reduce){.ask.ai.ask-soon:after{animation:none}.ask.ai.ask-soon{transition:none}}
-</style><div id="root"><div id="view"></div><aside id="harness" hidden aria-label="Harness"></aside><dialog id="detail"></dialog><button id="hdot" hidden aria-label="Open harness" title="Harness"></button></div><style id="eval-dataset-style">
+.cv-hp{position:absolute!important;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none}.cv-pop .cv-note{font-size:13px;color:var(--muted);margin-top:-4px}</style><div id="root"><div id="view"></div><aside id="harness" hidden aria-label="Harness"></aside><dialog id="detail"></dialog><button id="hdot" hidden aria-label="Open harness" title="Harness"></button></div><style id="eval-dataset-style">
 /* Give the evaluation case study a four-cell feature footprint in the existing desktop bento. */
 @media(min-width:981px){.grid.bento{grid-template-columns:repeat(12,minmax(0,1fr));grid-template-areas:'a a a a a a a b b c c c' 'e e e e e e e b b c c c' 'g g g g f f f d d h h h';align-items:stretch}.grid.bento [data-slot=a] .photo{aspect-ratio:auto;min-height:240px}.grid.bento [data-slot=e] .photo{aspect-ratio:auto;min-height:270px;padding:18px;gap:8px}.grid.bento [data-slot=b] .photo,.grid.bento [data-slot=c] .photo{aspect-ratio:auto;min-height:380px}.grid.bento [data-slot=d] .photo,.grid.bento [data-slot=f] .photo{aspect-ratio:16/10}.grid.bento [data-slot=g] .photo{aspect-ratio:auto;min-height:180px}.grid.bento [data-slot=e] .cs-face .big{font-size:clamp(34px,3vw,48px)!important}.grid.bento [data-slot=e] h3{font-size:clamp(22px,2.2vw,30px);line-height:1.15}.grid.bento [data-slot=e] .sum{display:block;font-size:15px;line-height:1.55}.grid.bento [data-slot=e] .cf-label{font-size:15px}.grid.bento [data-slot=e] .cf-keys span{font-size:12px;padding:7px 10px}.grid.bento [data-slot=e] .cf-eval-viz{min-height:86px;gap:6px;padding:8px;margin-top:6px}}
 @media(min-width:621px) and (max-width:980px){.grid.bento{grid-template-areas:'a a' 'e e' 'b c' 'g g' 'f d' 'h h'}.grid.bento [data-slot=a] .photo,.grid.bento [data-slot=e] .photo{aspect-ratio:auto;min-height:300px;padding:20px}.grid.bento [data-slot=e] .sum{display:block}}
@@ -1369,15 +1369,16 @@ function home(){
 }
 
 /* ---------- View CV: ask for an email, then send a request to Ankur ----------
-   Delivery needs a form-to-email endpoint on the live site (see CV_ENDPOINT). Inside this preview no
-   outside request can leave the page, so the page says so plainly instead of claiming it was sent. */
-const CV_ENDPOINT='';            // set at go-live, e.g. a Web3Forms / Formspree endpoint
-const CV_TO='john.ankur.ray@gmail.com', CV_BCC='ankurray561@gmail.com';
+   The cv-request Edge Function saves the request and emails Ankur, who replies with the CV by hand.
+   If it cannot be reached (offline, or a preview that blocks outside requests) the page offers his email instead. */
+const CV_ENDPOINT='https://zzkppvuedkkcdocmisje.supabase.co/functions/v1/cv-request';
+const CV_TO='john.ankur.ray@gmail.com';
 const emailOk=v=>/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
 function cvButton(){
   return '<div class="cv-wrap"><button type="button" class="me-cv" data-cv-toggle aria-expanded="false" aria-controls="cv-form">'+
     '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 3v5h5M10 13h6M10 17h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="cv-label">View CV</span><span class="cv-fill" aria-hidden="true"></span></button>'+
     '<form class="cv-drop" id="cv-form" hidden novalidate><label for="cv-email">Where should I send my CV?</label>'+
+    '<input class="cv-hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">'+
     '<div class="cv-row"><input id="cv-email" type="email" inputmode="email" autocomplete="email" placeholder="you@company.com" required><button type="submit" class="cv-ok">OK</button></div>'+
     '<p class="cv-err" id="cv-err" hidden>Enter a valid email address, like name@company.com.</p></form></div>';
 }
@@ -1399,17 +1400,22 @@ document.addEventListener('mouseout',e=>{
   const t=e.target.closest('[data-cv-toggle]'); if(!t||t.contains(e.relatedTarget)) return;
   clearTimeout(cvTimer); if($('#cv-form')?.hidden) t.classList.remove('filling','full');
 });
-async function sendCvRequest(email){
-  if(!CV_ENDPOINT) return false;
-  const r=await fetch(CV_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},
-    body:JSON.stringify({to:CV_TO,bcc:CV_BCC,subject:'CV request from '+email,message:email+' has requested your CV from your portfolio.',reply_to:email,requested_at:new Date().toISOString()})});
-  return r.ok;
+/* resolves 'sent', 'limited' or 'failed' */
+async function sendCvRequest(email,hp){
+  if(!CV_ENDPOINT) return 'failed';
+  const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(),15000);
+  try{
+    const r=await fetch(CV_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},signal:ctl.signal,
+      body:JSON.stringify({email,website:hp||'',source:location.hostname+location.pathname+location.hash})});
+    const j=await r.json().catch(()=>({}));
+    return j.status==='received'?'sent':j.status==='rate_limited'?'limited':'failed';
+  }catch(_){return 'failed'}finally{clearTimeout(t)}
 }
-function cvDone(email,sent){
+function cvDone(email,res){
   const d=$('#detail');
-  d.innerHTML='<div class="cv-pop">'+(sent
-    ?'<span class="cv-ic ok">'+SPARK+'</span><h3>Thank you for requesting!</h3><p>You will receive Ankur\'s CV at <b>'+esc(email)+'</b> within the next hour.</p>'
-    :'<span class="cv-ic">'+SPARK+'</span><h3>Thanks, almost there</h3><p>Automatic requests switch on when this site goes live. For now, send a one-line note to Ankur and the CV will come straight back:</p>'+
+  d.innerHTML='<div class="cv-pop" role="status">'+(res==='sent'
+    ?'<span class="cv-ic ok">'+SPARK+'</span><h3>Thank you for requesting!</h3><p>You will receive an email from Ankur with his CV at <b>'+esc(email)+'</b> in the next 5–10 minutes.</p><p class="cv-note">Can\'t see it? Check your spam or promotions folder.</p>'
+    :'<span class="cv-ic">'+SPARK+'</span><h3>'+(res==='limited'?'You\'ve already asked a few times':'Your request didn\'t go through')+'</h3><p>'+(res==='limited'?'Ankur has your earlier request. If you need it sooner, write to him directly:':'Please try again in a moment, or write to Ankur directly and he will send his CV:')+'</p>'+
      '<div class="cv-copy"><span class="sel">'+CV_TO+'</span><button type="button" class="see3" data-copy="'+CV_TO+'">Copy</button></div>')+
     '<button type="button" class="chip dark" data-close>Done</button></div>';
   d.showModal();
@@ -1427,9 +1433,9 @@ document.addEventListener('submit',async e=>{
   const inp=$('#cv-email'), err=$('#cv-err'), btn=e.target.querySelector('.cv-ok'), v=inp.value.trim();
   if(!emailOk(v)){err.hidden=false;inp.setAttribute('aria-invalid','true');inp.focus();return}
   err.hidden=true;inp.removeAttribute('aria-invalid');btn.disabled=true;btn.textContent='Sending…';
-  let sent=false;try{sent=await sendCvRequest(v)}catch(_){sent=false}
+  const res=await sendCvRequest(v,e.target.querySelector('.cv-hp')?.value);
   btn.disabled=false;btn.textContent='OK';e.target.hidden=true;inp.value='';$('[data-cv-toggle]')?.classList.remove('filling','full');
-  cvDone(v,sent);
+  cvDone(v,res);
 });
 function spotlightPreview(h){
   const previews={
