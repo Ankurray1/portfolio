@@ -1,10 +1,11 @@
 // View CV · a visitor leaves their email; Ankur gets an email about it and sends the CV by hand.
 // POST {"email": "...", "source": "page"} → { status }
-//   status "received"      saved; Ankur is emailed when RESEND_API_KEY is set (notified tells which)
+//   status "received"      saved; Ankur's Gmail emails itself when GMAIL_APP_PASSWORD is set (notified tells which)
 //   status "invalid" | "rate_limited" | "error"
 // Every request is kept in public.cv_requests, so none is lost even if the email fails.
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import nodemailer from 'npm:nodemailer@6.9.16';
 
 const ALLOWED_ORIGINS = [/^https:\/\/ankurray1\.github\.io$/, /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/];
 const PER_HOUR = 5;          // requests per visitor per hour
@@ -28,22 +29,32 @@ const sha256 = async (s: string) =>
 
 const html = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
+// Ankur's own Gmail sends the note to itself (SMTP over SSL on 465; Edge Functions block 25 and 587).
+// GMAIL_APP_PASSWORD is a Google App Password for NOTIFY_TO, added by Ankur as a Supabase secret.
+// RESEND_API_KEY still works as a fallback sender if it is ever added.
 async function notify(email: string, when: string): Promise<string | null> {
+  const subject = `CV request from ${email}`;
+  const text = `${email} asked for your CV on your portfolio (${when} UTC).\n\nReply to this email to send it; the reply goes straight to them.`;
+  const body = `<p><b>${html(email)}</b> asked for your CV on your portfolio (${html(when)} UTC).</p><p>Reply to this email to send it; the reply goes straight to them.</p>`;
+
+  const appPassword = Deno.env.get('GMAIL_APP_PASSWORD')?.replace(/\s+/g, '');
+  if (appPassword) {
+    const mail = nodemailer.createTransport({ host: 'smtp.gmail.com', port: 465, secure: true, auth: { user: NOTIFY_TO, pass: appPassword } });
+    try {
+      await mail.sendMail({ from: `Portfolio CV request <${NOTIFY_TO}>`, to: NOTIFY_TO, replyTo: email, subject, text, html: body });
+      return null;
+    } catch (e) {
+      return `gmail: ${String((e as Error)?.message ?? e).slice(0, 300)}`;
+    }
+  }
+
   const key = Deno.env.get('RESEND_API_KEY');
   // names only (never values), so a misnamed secret is easy to spot
-  if (!key) return `RESEND_API_KEY not set (similar names: ${Object.keys(Deno.env.toObject()).filter((k) => /resend|api|key/i.test(k) && !/^SUPABASE_/.test(k)).join(', ') || 'none'})`;
-  const subject = `CV request from ${email}`;
+  if (!key) return `no sender set (secret names seen: ${Object.keys(Deno.env.toObject()).filter((k) => /gmail|resend|pass|api|key/i.test(k) && !/^SUPABASE_/.test(k)).join(', ') || 'none'})`;
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: FROM,
-      to: [NOTIFY_TO],
-      reply_to: email,
-      subject,
-      text: `${email} asked for your CV on your portfolio (${when} UTC).\n\nReply to this email to send it; the reply goes straight to them.`,
-      html: `<p><b>${html(email)}</b> asked for your CV on your portfolio (${html(when)} UTC).</p><p>Reply to this email to send it; the reply goes straight to them.</p>`,
-    }),
+    body: JSON.stringify({ from: FROM, to: [NOTIFY_TO], reply_to: email, subject, text, html: body }),
   });
   return r.ok ? null : `resend ${r.status}: ${(await r.text()).slice(0, 300)}`;
 }
