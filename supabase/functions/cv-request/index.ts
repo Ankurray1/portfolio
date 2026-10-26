@@ -30,7 +30,8 @@ const html = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '
 
 async function notify(email: string, when: string): Promise<string | null> {
   const key = Deno.env.get('RESEND_API_KEY');
-  if (!key) return 'RESEND_API_KEY not set';
+  // names only (never values), so a misnamed secret is easy to spot
+  if (!key) return `RESEND_API_KEY not set (similar names: ${Object.keys(Deno.env.toObject()).filter((k) => /resend/i.test(k)).join(', ') || 'none'})`;
   const subject = `CV request from ${email}`;
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
