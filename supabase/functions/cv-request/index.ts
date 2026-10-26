@@ -7,7 +7,8 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import nodemailer from 'npm:nodemailer@6.9.16';
 
-const ALLOWED_ORIGINS = [/^https:\/\/ankurray1\.github\.io$/, /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/];
+// the live site on GitHub Pages and Netlify (production plus its deploy previews), and local testing
+const ALLOWED_ORIGINS = [/^https:\/\/ankurray1\.github\.io$/, /^https:\/\/([a-z0-9-]+--)?ankurray[a-z0-9-]*\.netlify\.app$/, /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/];
 const PER_HOUR = 5;          // requests per visitor per hour
 const REPEAT_MINUTES = 30;   // the same email asking again within this window is not emailed twice
 const NOTIFY_TO = 'john.ankur.ray@gmail.com';

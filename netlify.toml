@@ -1,0 +1,31 @@
+# Netlify serves the site as-is: one static index.html, no build step.
+[build]
+  publish = "."
+  command = ""
+
+# Backend source and knowledge-base build files are not part of the site.
+[[redirects]]
+  from = "/supabase/*"
+  to = "/"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/kb/build-kb.js"
+  to = "/"
+  status = 404
+  force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "SAMEORIGIN"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# The page changes often; always fetch the latest copy.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

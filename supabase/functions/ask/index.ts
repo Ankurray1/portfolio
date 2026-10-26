@@ -9,7 +9,8 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const ALLOWED_ORIGINS = [/^https:\/\/ankurray1\.github\.io$/, /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/];
+// the live site on GitHub Pages and Netlify (production plus its deploy previews), and local testing
+const ALLOWED_ORIGINS = [/^https:\/\/ankurray1\.github\.io$/, /^https:\/\/([a-z0-9-]+--)?ankurray[a-z0-9-]*\.netlify\.app$/, /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/];
 const PER_HOUR = 20;
 const MAX_ANSWER_TOKENS = 700;
 const MAX_QUESTION = 2000;

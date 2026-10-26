@@ -1403,7 +1403,7 @@ document.addEventListener('mouseout',e=>{
 /* resolves 'sent', 'limited', 'failed' or 'offsite' (a preview that cannot reach the backend) */
 async function sendCvRequest(email,hp){
   if(!CV_ENDPOINT) return 'failed';
-  if(!/github\.io$|^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return 'offsite';
+  if(!/github\.io$|netlify\.app$|^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return 'offsite';
   const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(),15000);
   try{
     const r=await fetch(CV_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},signal:ctl.signal,
@@ -2611,7 +2611,7 @@ async function askLive(q){
   try{const res=await fetch(ASK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question,jobDescription:jd,jobDescriptionPages:askPdf?.pages||0})});j=await res.json()}catch(err){j=null}
   if(id!==askSeq)return;
   const mail=state.profile.email?', or write to <span class="sel">'+esc(state.profile.email)+'</span>':'';
-  const onSite=/github\.io$|^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  const onSite=/github\.io$|netlify\.app$|^(localhost|127\.0\.0\.1)$/.test(location.hostname);
   let answer=j&&typeof j.answer==='string'?j.answer:'';
   if(answer.length>ASK_OUTPUT_MAX)answer=answer.slice(0,ASK_OUTPUT_MAX-1).trimEnd()+'…';
   const a=!j?(onSite?'Ask Ankur could not be reached just now. Please try again in a moment'+mail+'.':'Ask Ankur runs on the live site. <a href="'+LIVE_SITE+'" target="_blank" rel="noopener">Open it on ankurray1.github.io</a> to ask your question.')
