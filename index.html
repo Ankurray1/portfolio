@@ -1459,7 +1459,6 @@ button.ak-entry:focus-visible{outline:2px solid #4A93B2;outline-offset:3px}
 @media print{.ak-launch,.ak-hello,.ak,.ak-veil{display:none!important}}
 
 /* ---------- Ask Ankur, the living layer: flowing gradient light on everything the AI touches ---------- */
-html[data-mode="founder"] .ak-launch,html[data-mode="founder"] .ak-hello{display:none}
 /* launcher: a ring of light that circles the pill, a soft halo that breathes, and a sheen across the label */
 .ak-launch{isolation:isolate;padding:0 16px 0 7px;border:1.5px solid transparent;background:linear-gradient(color-mix(in srgb,var(--surface) 94%,transparent),color-mix(in srgb,var(--surface) 94%,transparent)) padding-box,conic-gradient(from var(--ak-a),#4A93B2,#7B6BB0,#C9667A,#E0A458,#4A93B2) border-box;animation:ak-rise .7s cubic-bezier(.2,.8,.2,1) .5s both,ak-orb 4s linear infinite}
 .ak-launch::before{content:"";position:absolute;inset:-5px;z-index:-1;border-radius:inherit;background:conic-gradient(from var(--ak-a),#4A93B2,#7B6BB0,#C9667A,#E0A458,#4A93B2);filter:blur(14px);opacity:.42;animation:ak-orb 4s linear infinite,ak-breathe 3.4s ease-in-out infinite}
@@ -3251,7 +3250,7 @@ function akTease(){
   const open=!b.classList.contains('min'),hover=b.matches(':hover');
   if(open&&hover){akTeaseT=setTimeout(akTease,1500);return}
   if(open){b.classList.add('min');delete b.dataset.akTease;b.setAttribute('aria-label','Ask Ankur, AI assistant');akTeaseT=setTimeout(akTease,4000);return}
-  const quiet=akOpenNow()||document.hidden||hover||askChat.length||document.documentElement.dataset.mode==='founder'||matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const quiet=akOpenNow()||document.hidden||hover||askChat.length||matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(!quiet){const q=AK_TEASE[akTeaseI++%AK_TEASE.length];b.querySelector('.ak-launch-t').textContent=q;b.dataset.akTease=q;b.setAttribute('aria-label','Ask Ankur: '+q);b.classList.remove('min')}
   akTeaseT=setTimeout(akTease,quiet?4000:4500);
 }
@@ -3480,7 +3479,7 @@ document.addEventListener('pointermove',e=>{const b=e.target.closest&&e.target.c
 document.addEventListener('submit',e=>{if(e.target.id==='ak-form'){e.preventDefault();akAsk($('#ak-ques').value)}});
 document.addEventListener('change',e=>{if(e.target.id==='ak-pdf')akReadPdf(e.target.files&&e.target.files[0])});
 document.addEventListener('input',e=>{if(e.target.id!=='ak-ques')return;const q=e.target;q.style.height='auto';q.style.height=Math.min(q.scrollHeight,132)+'px';akControls()});
-addEventListener('hashchange',()=>{if(route()==='founder')akClose()});
+
 addEventListener('keydown',e=>{
   if(!akOpenNow())return;
   if(e.key==='Escape'){e.preventDefault();akClose();return}
