@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Ask Ankur Insights</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Ask Ankur insights: private numbers behind the site assistant. Same tokens as the portfolio. */
+:root{--bg:#ECECEA;--surface:#FFFFFF;--sunk:#F2F2EF;--ink:#151515;--muted:#6C6C67;--line:#DEDED9;--bar:#2a78d6;--bar-soft:#d6e6f9;
+  --good:#0ca30c;--warn:#fab219;--serious:#ec835a;--crit:#d03b3b;--neutral:#8a8a84;
+  --display:"Geist","Helvetica Neue",Arial,sans-serif;--mono:"Geist Mono",ui-monospace,Menlo,monospace;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121212;--surface:#1a1a19;--sunk:#232321;--ink:#F1F0EC;--muted:#A09F99;--line:#34342F;--bar:#3987e5;--bar-soft:#1f3550;--neutral:#8f8e88;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121212;--surface:#1a1a19;--sunk:#232321;--ink:#F1F0EC;--muted:#A09F99;--line:#34342F;--bar:#3987e5;--bar-soft:#1f3550;--neutral:#8f8e88;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.5 var(--display);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:24px 16px 64px}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin-bottom:20px}
+.brand{display:flex;align-items:center;gap:12px;flex:1;min-width:220px}
+.mark{position:relative;width:40px;height:40px;border-radius:50%;flex:none;background:conic-gradient(from 0deg,#4A93B2,#7B6BB0,#C9667A,#E0A458,#4A93B2);padding:3px}
+.mark i{display:block;width:100%;height:100%;border-radius:50%;background:var(--surface);display:grid;place-items:center;font:600 13px/1 var(--display)}
+h1{margin:0;font:600 19px/1.2 var(--display);letter-spacing:-.015em}
+.sub{margin:2px 0 0;color:var(--muted);font-size:13px}
+.seg{display:inline-flex;padding:3px;border-radius:10px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.seg button{all:unset;cursor:pointer;padding:6px 12px;border-radius:7px;font-size:13px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.seg button:focus-visible,.btn:focus-visible{outline:2px solid var(--bar);outline-offset:2px}
+.btn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:9px;font-size:13px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.btn:hover{background:var(--sunk)}
+.updated{font:500 11px/1 var(--mono);color:var(--muted);letter-spacing:.03em}
+.grid{display:grid;gap:12px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:12px}
+.card{background:var(--surface);border-radius:16px;box-shadow:inset 0 0 0 1px var(--line);padding:16px;min-width:0}
+.kpi b{display:block;font:600 28px/1.1 var(--display);letter-spacing:-.02em;margin:6px 0 2px}
+.kpi small{color:var(--muted);font-size:12.5px}
+.label{font:500 10.5px/1.2 var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.two{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);margin-bottom:12px}
+@media (max-width:820px){.two{grid-template-columns:minmax(0,1fr)}}
+h2{margin:0 0 12px;font:600 15px/1.3 var(--display);letter-spacing:-.01em}
+h2 small{font-weight:400;color:var(--muted);font-size:12.5px;margin-left:6px}
+.chart{position:relative;height:200px}
+.chart svg{display:block;width:100%;height:100%;overflow:visible}
+.chart .grid-line{stroke:var(--line);stroke-width:1}
+.chart .axis{fill:var(--muted);font:400 10.5px var(--mono)}
+.chart .b{fill:var(--bar);transition:opacity .15s}
+.chart rect.hit{fill:transparent;cursor:default}
+.chart g.col:hover .b,.chart g.col:focus .b{opacity:.75}
+.chart g.col:focus{outline:none}
+.tip{position:absolute;pointer-events:none;z-index:2;padding:8px 10px;border-radius:9px;background:var(--surface);box-shadow:0 8px 24px -10px rgba(0,0,0,.35),inset 0 0 0 1px var(--line);font-size:12px;white-space:nowrap;transform:translate(-50%,-100%);margin-top:-8px}
+.tip b{display:block;font-size:14px}
+.tip span{color:var(--muted)}
+.tip[hidden]{display:none}
+details.table{margin-top:10px}
+details.table summary{cursor:pointer;color:var(--muted);font-size:12.5px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font:500 10.5px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 8px 8px 0;border-bottom:1px solid var(--line)}
+td{padding:9px 8px 9px 0;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+th.n{text-align:right}
+.outcome{display:grid;grid-template-columns:120px minmax(0,1fr) 36px;align-items:center;gap:10px;margin:8px 0;font-size:13px}
+.outcome .track{height:10px;border-radius:5px;background:var(--sunk);overflow:hidden}
+.outcome .fill{height:100%;border-radius:4px}
+.outcome .v{text-align:right;font-variant-numeric:tabular-nums}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;font-size:11.5px;white-space:nowrap;background:var(--sunk)}
+.pill i{width:7px;height:7px;border-radius:50%}
+.q{max-width:520px}
+.feed{display:grid;gap:10px}
+.feed article{padding:12px 14px;border-radius:12px;background:var(--sunk)}
+.feed .meta{font:500 11px/1 var(--mono);color:var(--muted);margin-bottom:6px}
+.feed p{margin:4px 0 0;white-space:pre-wrap;font-size:13px;color:var(--muted)}
+.empty{color:var(--muted);font-size:13px;padding:8px 0}
+.gate{max-width:420px;margin:12vh auto 0}
+.gate form{display:grid;gap:10px;margin-top:14px}
+.gate input{font:inherit;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.gate input:focus{outline:2px solid var(--bar);outline-offset:1px}
+.gate button{font:600 14px var(--display);padding:11px;border:0;border-radius:10px;cursor:pointer;color:#fff;background:linear-gradient(120deg,#4A93B2,#7B6BB0 55%,#C9667A)}
+.err{color:var(--crit);font-size:13px;min-height:1.2em;margin:0}
+.loading{opacity:.55;transition:opacity .2s}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="gate card" id="gate" hidden>
+    <div class="brand"><span class="mark"><i>A</i></span><div><h1>Ask Ankur Insights</h1><p class="sub">Private. Enter your access key to open it.</p></div></div>
+    <form id="gate-form" autocomplete="off">
+      <input id="key" type="password" placeholder="Access key" aria-label="Access key" required>
+      <button type="submit">Open insights</button>
+      <p class="err" id="gate-err" role="alert"></p>
+    </form>
+  </section>
+
+  <main id="app" hidden>
+    <header>
+      <div class="brand"><span class="mark"><i>A</i></span><div><h1>Ask Ankur Insights</h1><p class="sub">What recruiters ask on your portfolio, and how well it answers.</p></div></div>
+      <div class="seg" role="group" aria-label="Date range"><button data-days="7">7 days</button><button data-days="30">30 days</button><button data-days="90">90 days</button></div>
+      <button class="btn" id="refresh" type="button">Refresh</button>
+      <button class="btn" id="lock" type="button" title="Forget the key on this device">Lock</button>
+      <span class="updated" id="updated"></span>
+    </header>
+
+    <section class="grid kpis" id="kpis"></section>
+
+    <section class="grid two">
+      <div class="card"><h2>Questions per day<small id="daily-note"></small></h2><div class="chart" id="chart"><div class="tip" id="tip" hidden></div></div>
+        <details class="table"><summary>Show as a table</summary><table id="daily-table"></table></details></div>
+      <div class="card"><h2>What happened to each question</h2><div id="outcomes"></div></div>
+    </section>
+
+    <section class="grid two">
+      <div class="card"><h2>Most asked</h2><table id="top"></table></div>
+      <div class="card"><h2>Thumbs down<small>answers to improve</small></h2><div class="feed" id="disliked"></div></div>
+    </section>
+
+    <section class="grid two">
+      <div class="card"><h2>Recent questions</h2><table id="recent"></table></div>
+      <div class="card"><h2>Caught by the fact-checker<small>figures no source states</small></h2><div class="feed" id="caught"></div></div>
+    </section>
+  </main>
+</div>
+<script>
+const URL_='https://zzkppvuedkkcdocmisje.supabase.co/functions/v1/ask-insights';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store={get(){try{return localStorage.getItem('ak-insights-key')||''}catch(_){return ''}},set(v){try{v?localStorage.setItem('ak-insights-key',v):localStorage.removeItem('ak-insights-key')}catch(_){}}};
+let key=store.get(),days=30,last=null;
+try{days=+localStorage.getItem('ak-insights-days')||30}catch(_){}
+/* each outcome keeps one meaning and one colour; the label always travels with it */
+const OUT={answered:['Answered','var(--good)'],declined:['Not on the site','var(--neutral)'],no_match:['Off-topic','var(--neutral)'],policy:['Salary / notice','var(--neutral)'],
+  unverified:['Held back (unverified)','var(--warn)'],retrieval_only:['Showed sources only','var(--serious)'],rate_limited:['Rate limited','var(--serious)'],error:['Error / stopped','var(--crit)']};
+const out=s=>OUT[s]||[s,'var(--neutral)'];
+const pill=s=>'<span class="pill"><i style="background:'+out(s)[1]+'"></i>'+esc(out(s)[0])+'</span>';
+const when=t=>new Date(t).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+const secs=ms=>ms==null?'—':(ms/1000).toFixed(1)+'s';
+const pct=(a,b)=>b?Math.round(a/b*100)+'%':'—';
+
+async function load(){
+  $('#app').classList.add('loading');
+  let j=null,status=0;
+  try{const r=await fetch(URL_,{method:'POST',headers:{'Content-Type':'application/json','x-insights-key':key},body:JSON.stringify({days})});status=r.status;j=await r.json()}catch(_){}
+  $('#app').classList.remove('loading');
+  if(!j||j.error){ if(status===401||status===429){store.set('');key='';gate(j&&j.error)} else $('#updated').textContent='Could not load. Try Refresh.'; return }
+  $('#gate').hidden=true;$('#app').hidden=false;last=j;render(j);
+}
+function gate(msg){$('#app').hidden=true;$('#gate').hidden=false;$('#gate-err').textContent=msg||'';$('#key').focus()}
+
+function render(j){
+  document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.days===j.days)));
+  $('#updated').textContent='Updated '+new Date().toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+  const s=j.summary,votes=s.thumbs_up+s.thumbs_down;
+  $('#kpis').innerHTML=[
+    ['Questions asked',s.questions,'in the last '+j.days+' days'],
+    ['Answered',pct(s.answered,s.questions),s.answered+' of '+s.questions],
+    ['Helpful',pct(s.thumbs_up,votes),votes?s.thumbs_up+' 👍 · '+s.thumbs_down+' 👎':'no votes yet'],
+    ['First words in',secs(s.median_first_word_ms),'median; full answer '+secs(s.median_total_ms)],
+    ['CV requests',s.cv_requests,'emailed from the site'],
+    ['Job-fit checks',s.job_fit_checks,'job descriptions attached']
+  ].map(k=>'<div class="card kpi"><span class="label">'+k[0]+'</span><b>'+esc(k[1])+'</b><small>'+esc(k[2])+'</small></div>').join('');
+  chart(j.daily);
+  $('#daily-table').innerHTML='<tr><th>Day</th><th class="n">Questions</th><th class="n">Answered</th></tr>'+j.daily.slice().reverse().map(d=>'<tr><td>'+esc(d.day)+'</td><td class="n">'+d.questions+'</td><td class="n">'+d.answered+'</td></tr>').join('');
+  const total=Object.values(j.outcomes).reduce((a,b)=>a+b,0);
+  $('#outcomes').innerHTML=total?Object.entries(j.outcomes).sort((a,b)=>b[1]-a[1]).map(([k,v])=>'<div class="outcome"><span>'+esc(out(k)[0])+'</span><span class="track"><span class="fill" style="display:block;width:'+Math.max(3,v/total*100)+'%;background:'+out(k)[1]+'"></span></span><span class="v">'+v+'</span></div>').join(''):'<p class="empty">No questions yet in this range.</p>';
+  $('#top').innerHTML=j.top_questions.length?'<tr><th>Question</th><th class="n">Asked</th><th class="n">Answered</th></tr>'+j.top_questions.map(t=>'<tr><td class="q">'+esc(t.question)+'</td><td class="n">'+t.count+'</td><td class="n">'+t.answered+'</td></tr>').join(''):'<tr><td class="empty">No questions yet.</td></tr>';
+  $('#disliked').innerHTML=j.disliked.length?j.disliked.map(d=>'<article><div class="meta">'+esc(when(d.created_at))+'</div><b>'+esc(d.question)+'</b><p>'+esc(d.answer||'')+'</p></article>').join(''):'<p class="empty">No thumbs down in this range. Answers that get one appear here with the full text.</p>';
+  $('#caught').innerHTML=j.caught.length?j.caught.map(c=>'<article><div class="meta">'+esc(when(c.created_at))+' · '+(c.status==='answered'?'line removed, answer kept':'answer held back')+'</div><b>'+esc(c.question)+'</b><p>Figure not in any source: '+esc((c.unverified||[]).join(', '))+'</p></article>').join(''):'<p class="empty">Nothing caught in this range.</p>';
+  $('#recent').innerHTML=j.recent.length?'<tr><th>When</th><th>Question</th><th>Outcome</th><th class="n">Time</th></tr>'+j.recent.map(r=>'<tr><td style="white-space:nowrap;color:var(--muted)">'+esc(when(r.created_at))+'</td><td class="q">'+esc(r.question)+(r.has_jd?' <span class="pill">job description</span>':'')+(r.feedback===1?' 👍':r.feedback===-1?' 👎':'')+'</td><td>'+pill(r.status)+'</td><td class="n">'+secs(r.total_ms)+'</td></tr>').join(''):'<tr><td class="empty">No questions yet.</td></tr>';
+}
+
+/* questions per day: one series, so one blue and no legend; hover or focus a bar for its numbers */
+function chart(daily){
+  const el=$('#chart'),tip=$('#tip'),W=el.clientWidth||600,H=200,padL=28,padB=22,padT=8,iw=W-padL,ih=H-padB-padT;
+  const max=Math.max(1,...daily.map(d=>d.questions)),step=max<=4?1:Math.ceil(max/4),top=Math.ceil(max/step)*step;
+  const bw=iw/daily.length,gap=Math.min(2,bw*.25),y=v=>padT+ih-(v/top)*ih;
+  let g='';
+  for(let v=0;v<=top;v+=step)g+='<line class="grid-line" x1="'+padL+'" x2="'+W+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text class="axis" x="'+(padL-6)+'" y="'+(y(v)+3)+'" text-anchor="end">'+v+'</text>';
+  const every=Math.ceil(daily.length/6);
+  daily.forEach((d,i)=>{const x=padL+i*bw,h=ih-(y(d.questions)-padT),r=Math.min(4,(bw-gap)/2);
+    g+='<g class="col" tabindex="0" data-i="'+i+'" aria-label="'+esc(d.day)+': '+d.questions+' questions, '+d.answered+' answered">'+
+      (d.questions?'<path class="b" d="M'+(x+gap/2)+','+(padT+ih)+'V'+(y(d.questions)+r)+'q0,-'+r+' '+r+',-'+r+'H'+(x+bw-gap/2-r)+'q'+r+',0 '+r+','+r+'V'+(padT+ih)+'Z" fill="var(--bar)"/>':'')+
+      '<rect class="hit" x="'+x+'" y="'+padT+'" width="'+bw+'" height="'+ih+'"/></g>';
+    if(i%every===0)g+='<text class="axis" x="'+(x+bw/2)+'" y="'+(H-6)+'" text-anchor="middle">'+esc(new Date(d.day+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'}))+'</text>'});
+  el.querySelector('svg')?.remove();
+  el.insertAdjacentHTML('afterbegin','<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Questions per day">'+g+'</svg>');
+  const show=n=>{const i=+n.dataset.i,d=daily[i];tip.innerHTML='';const b=document.createElement('b');b.textContent=d.questions+' question'+(d.questions===1?'':'s');const sp=document.createElement('span');
+    sp.textContent=new Date(d.day+'T00:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})+' · '+d.answered+' answered';tip.append(b,sp);
+    tip.style.left=(padL+i*bw+bw/2)/W*100+'%';tip.style.top=(d.questions?y(d.questions):padT+ih)/H*100+'%';tip.hidden=false};
+  el.querySelectorAll('g.col').forEach(n=>{n.addEventListener('pointerenter',()=>show(n));n.addEventListener('focus',()=>show(n));n.addEventListener('pointerleave',()=>tip.hidden=true);n.addEventListener('blur',()=>tip.hidden=true)});
+  $('#daily-note').textContent=daily.reduce((a,d)=>a+d.questions,0)+' in total';
+}
+
+$('#gate-form').addEventListener('submit',e=>{e.preventDefault();key=$('#key').value.trim();if(!key)return;store.set(key);$('#gate-err').textContent='';load()});
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{days=+b.dataset.days;try{localStorage.setItem('ak-insights-days',days)}catch(_){}load()}));
+$('#refresh').addEventListener('click',load);
+$('#lock').addEventListener('click',()=>{store.set('');key='';gate('Locked. The key is no longer saved on this device.')});
+let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(last&&!$('#app').hidden)chart(last.daily)},150)});
+setInterval(()=>{if(key&&!document.hidden&&!$('#app').hidden)load()},60000); // keeps itself fresh while open
+key?load():gate();
+</script>
+</body>
+</html>
