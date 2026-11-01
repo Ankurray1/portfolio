@@ -1721,6 +1721,24 @@ button.ak-entry .ask-soon-cta svg{width:15px;height:15px}
 .cert.cert-hit{animation:cert-hit 2.4s cubic-bezier(.2,.8,.2,1)}
 @keyframes cert-hit{0%{box-shadow:0 0 0 0 color-mix(in srgb,#4A93B2 0%,transparent)}15%,55%{box-shadow:0 0 0 4px color-mix(in srgb,#4A93B2 45%,transparent),0 18px 40px -16px color-mix(in srgb,#7B6BB0 60%,transparent)}100%{box-shadow:0 0 0 0 transparent}}
 @media (prefers-reduced-motion:reduce){.cert.cert-hit{animation:none;outline:3px solid #4A93B2}}
+
+/* home hero: the headline asks "Where should we start?"; this quiet line answers it with the assistant */
+.hero-ask{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:10px;margin-top:-2px;padding:5px 15px 5px 5px;border-radius:999px;font:500 14px/1.2 var(--display);letter-spacing:-.005em;color:var(--muted);background:color-mix(in srgb,var(--surface) 65%,transparent);box-shadow:inset 0 0 0 1px var(--line);transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,background-color .2s,color .2s}
+.hero-ask b{font-weight:600;background:linear-gradient(110deg,#2F6F8A,#5B4FA0 55%,#A04B63);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-ask-orb{width:24px;height:24px}
+.hero-ask-orb svg{width:12px;height:12px}
+.hero-ask-orb:after{inset:-2px}
+.hero-ask-arr{color:#5B4FA0;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.hero-ask:hover{color:var(--ink);background:var(--surface);transform:translateY(-1px);box-shadow:inset 0 0 0 1px color-mix(in srgb,#7B6BB0 35%,var(--line)),0 10px 24px -14px color-mix(in srgb,#7B6BB0 70%,transparent)}
+.hero-ask:hover .hero-ask-arr{transform:translateX(3px)}
+.hero-ask:focus-visible{outline:2px solid #4A93B2;outline-offset:3px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .hero-ask b{background-image:linear-gradient(110deg,#8CCBE6,#B4A8F0 55%,#F0A0B4)}:root:not([data-theme="light"]) .hero-ask-arr{color:#B4A8F0}}
+:root[data-theme="dark"] .hero-ask b{background-image:linear-gradient(110deg,#8CCBE6,#B4A8F0 55%,#F0A0B4)}
+
+/* home headline on exactly two lines: the second line never wraps, and the size eases down only when the column is too narrow for it */
+.hello-text{container-type:inline-size}
+.hello-text h1{font-size:max(30px,min(clamp(40px,5.4vw,78px),9.6cqi))}
+.hello-l2{white-space:nowrap}
 </style><div id="root"><div id="view"></div><aside id="harness" hidden aria-label="Harness"></aside><dialog id="detail"></dialog><button id="hdot" hidden aria-label="Open harness" title="Harness"></button></div><style id="eval-dataset-style">
 /* Give the evaluation case study a four-cell feature footprint in the existing desktop bento. */
 @media(min-width:981px){.grid.bento{grid-template-columns:repeat(12,minmax(0,1fr));grid-template-areas:'a a a a a a a b b c c c' 'e e e e e e e b b c c c' 'g g g g f f f d d h h h';align-items:stretch}.grid.bento [data-slot=a] .photo{aspect-ratio:auto;min-height:240px}.grid.bento [data-slot=e] .photo{aspect-ratio:auto;min-height:270px;padding:18px;gap:8px}.grid.bento [data-slot=b] .photo,.grid.bento [data-slot=c] .photo{aspect-ratio:auto;min-height:380px}.grid.bento [data-slot=d] .photo,.grid.bento [data-slot=f] .photo{aspect-ratio:16/10}.grid.bento [data-slot=g] .photo{aspect-ratio:auto;min-height:180px}.grid.bento [data-slot=e] .cs-face .big{font-size:clamp(34px,3vw,48px)!important}.grid.bento [data-slot=e] h3{font-size:clamp(22px,2.2vw,30px);line-height:1.15}.grid.bento [data-slot=e] .sum{display:block;font-size:15px;line-height:1.55}.grid.bento [data-slot=e] .cf-label{font-size:15px}.grid.bento [data-slot=e] .cf-keys span{font-size:12px;padding:7px 10px}.grid.bento [data-slot=e] .cf-eval-viz{min-height:86px;gap:6px;padding:8px;margin-top:6px}}
@@ -1956,7 +1974,8 @@ function home(){
       (p.about?'<div class="li-about" data-more><p>'+esc(p.about)+'</p><button type="button" class="li-more" data-li-more>…see more</button></div>':'')+
       '<div class="me-actions">'+cvButton()+(url(p.github)?'<a class="me-gh" href="'+esc(url(p.github))+'" target="_blank" rel="noopener" aria-label="GitHub profile" title="GitHub · Ankurray1">'+GH_MARK+'GitHub</a>':'')+
         '<span class="li-peek" aria-hidden="true"><span class="li-peek-img"></span><span class="li-peek-cap"><b class="in-mark">in</b>A glimpse of my LinkedIn · select to open the full profile</span></span>'+'</div></div></aside></div>'+
-    '<div class="hello-text"><p class="eyebrow">'+esc(p.role)+'</p><h1>'+esc(p.hello||'Hi, I\'m Ankur.')+'<br>Where should we <em>start</em>?</h1>'+
+    '<div class="hello-text"><p class="eyebrow">'+esc(p.role)+'</p><h1>'+esc(p.hello||'Hi, I\'m Ankur.')+'<br><span class="hello-l2">Where should we <em>start</em>?</span></h1>'+
+      '<button type="button" class="hero-ask" data-ak-open aria-haspopup="dialog" aria-controls="ak"><span class="ak-orb hero-ask-orb" aria-hidden="true"><i></i>'+SPARK+'</span><span>Not sure? <b>Ask my AI</b></span><span class="hero-ask-arr" aria-hidden="true">→</span></button>'+
       String(p.intro||'').split(/\n\s*\n/).map(t=>'<p class="lede">'+esc(t.trim())+'</p>').join('')+
       '</div><button type="button" class="scroll-cue" data-scroll-doors aria-label="Scroll down to choose a track"><span class="sc-pill" aria-hidden="true"><span class="sc-text">Scroll down</span><span class="sc-knob"><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span></button></section>'+
   '<section class="chooser"><div class="doors" id="doors-anchor">'+door('pm',pm,'The product manager career',1)+door('founder',f,'The entrepreneurial journey',4)+'</div></section>'+
