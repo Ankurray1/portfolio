@@ -1703,6 +1703,19 @@ button.ak-entry:hover .ask-soon-cta svg{transform:translateX(3px)}
 @media (max-width:640px){.cs-pop{left:12px;bottom:12px;width:calc(100vw - 84px);border-radius:18px}.cs-pop-vis{width:54px;height:78px}.cs-pop-body b{font-size:14px}.cs-pop-body small{display:none}}
 @media (prefers-reduced-motion:reduce){.cs-pop,.cs-pop.on,.cs-pop.out{transform:none;filter:none;transition:opacity .3s}.cs-pop.on:before{animation:none}}
 @media print{.cs-pop{display:none!important}}
+
+/* profile card schools that open their certificate */
+.li-org-link{position:relative;display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0;border-radius:8px;color:inherit;text-decoration:none;transition:background-color .2s,box-shadow .2s}
+.li-org-link:hover,.li-org-link:focus-visible{background:var(--sunk);box-shadow:0 0 0 6px var(--sunk)}
+.li-org-link:focus-visible{outline:2px solid #4A93B2;outline-offset:1px}
+.li-org-go{position:absolute;right:0;bottom:0;padding:3px 0 3px 10px;background:linear-gradient(90deg,transparent,var(--sunk) 10px);font:500 10px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#2F6F8A;opacity:0;transform:translateX(-4px);transition:opacity .2s,transform .25s cubic-bezier(.2,.8,.2,1)}
+.li-org-link:hover .li-org-go,.li-org-link:focus-visible .li-org-go{opacity:1;transform:none}
+@media (hover:none){.li-org-go{display:none}}
+.li-org-link:hover .li-org-t>span:first-child{text-decoration:underline;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,#4A93B2 60%,transparent)}
+.cert{scroll-margin:90px}
+.cert.cert-hit{animation:cert-hit 2.4s cubic-bezier(.2,.8,.2,1)}
+@keyframes cert-hit{0%{box-shadow:0 0 0 0 color-mix(in srgb,#4A93B2 0%,transparent)}15%,55%{box-shadow:0 0 0 4px color-mix(in srgb,#4A93B2 45%,transparent),0 18px 40px -16px color-mix(in srgb,#7B6BB0 60%,transparent)}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){.cert.cert-hit{animation:none;outline:3px solid #4A93B2}}
 </style><div id="root"><div id="view"></div><aside id="harness" hidden aria-label="Harness"></aside><dialog id="detail"></dialog><button id="hdot" hidden aria-label="Open harness" title="Harness"></button></div><style id="eval-dataset-style">
 /* Give the evaluation case study a four-cell feature footprint in the existing desktop bento. */
 @media(min-width:981px){.grid.bento{grid-template-columns:repeat(12,minmax(0,1fr));grid-template-areas:'a a a a a a a b b c c c' 'e e e e e e e b b c c c' 'g g g g f f f d d h h h';align-items:stretch}.grid.bento [data-slot=a] .photo{aspect-ratio:auto;min-height:240px}.grid.bento [data-slot=e] .photo{aspect-ratio:auto;min-height:270px;padding:18px;gap:8px}.grid.bento [data-slot=b] .photo,.grid.bento [data-slot=c] .photo{aspect-ratio:auto;min-height:380px}.grid.bento [data-slot=d] .photo,.grid.bento [data-slot=f] .photo{aspect-ratio:16/10}.grid.bento [data-slot=g] .photo{aspect-ratio:auto;min-height:180px}.grid.bento [data-slot=e] .cs-face .big{font-size:clamp(34px,3vw,48px)!important}.grid.bento [data-slot=e] h3{font-size:clamp(22px,2.2vw,30px);line-height:1.15}.grid.bento [data-slot=e] .sum{display:block;font-size:15px;line-height:1.55}.grid.bento [data-slot=e] .cf-label{font-size:15px}.grid.bento [data-slot=e] .cf-keys span{font-size:12px;padding:7px 10px}.grid.bento [data-slot=e] .cf-eval-viz{min-height:86px;gap:6px;padding:8px;margin-top:6px}}
@@ -1933,7 +1946,8 @@ function home(){
       '<div class="li-body"><h2>'+esc(p.name)+(p.verified?'<span class="li-ver" title="Verified on LinkedIn" aria-label="Verified on LinkedIn"><svg viewBox="0 0 24 24"><path d="M12 2l7 3v6c0 4.6-3 8.7-7 10-4-1.3-7-5.4-7-10V5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 12l2.4 2.4L15.5 9.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>':'')+(url(p.linkedin)?'<a class="me-in li-name-in" href="'+esc(url(p.linkedin))+'" target="_blank" rel="noopener" aria-label="'+esc(p.name)+' on LinkedIn" title="View on LinkedIn"><span class="in-mark" aria-hidden="true">in</span></a>':'')+'</h2>'+
       '<p class="li-head">'+esc(p.liHeadline||p.headline)+'</p>'+
       '<p class="li-meta">'+esc(p.location||'')+(p.followers?' · <b>'+esc(p.followers)+'</b>':'')+'</p>'+
-      '<ul class="li-orgs">'+lines(p.orgs).map((o,k)=>'<li>'+(/^logo-[a-z]+$/.test(o[2]||'')?'<span class="li-logo img" style="background-image:var(--'+o[2]+')" role="img" aria-label="'+esc(o[0])+' logo"></span>':'<span class="li-logo '+tone(o[2]||k+1)+'">'+esc(o[0].split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase())+'</span>')+'<span class="li-org-t"><span>'+esc(o[0])+'</span>'+(o[1]?'<small>'+esc(o[1])+'</small>':'')+'</span></li>').join('')+'</ul>'+
+      '<ul class="li-orgs">'+lines(p.orgs).map((o,k)=>{const cert=/^logo-[a-z]+$/.test(o[2]||'')&&(state.pm.certs||[]).find(c=>c.image===o[2].replace(/^logo-/,'cert-'));
+        return '<li'+(cert?' class="has-cert"':'')+'>'+(cert?'<a class="li-org-link" href="#certs" data-cert-go="'+esc(cert.image)+'" aria-label="'+esc(o[0])+': view the certificate">':'')+(/^logo-[a-z]+$/.test(o[2]||'')?'<span class="li-logo img" style="background-image:var(--'+o[2]+')" role="img" aria-label="'+esc(o[0])+' logo"></span>':'<span class="li-logo '+tone(o[2]||k+1)+'">'+esc(o[0].split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase())+'</span>')+'<span class="li-org-t"><span>'+esc(o[0])+'</span>'+(o[1]?'<small>'+esc(o[1])+'</small>':'')+'</span>'+(cert?'<span class="li-org-go" aria-hidden="true">Certificate →</span></a>':'')+'</li>'}).join('')+'</ul>'+
       (p.about?'<div class="li-about" data-more><p>'+esc(p.about)+'</p><button type="button" class="li-more" data-li-more>…see more</button></div>':'')+
       '<div class="me-actions">'+cvButton()+(url(p.github)?'<a class="me-gh" href="'+esc(url(p.github))+'" target="_blank" rel="noopener" aria-label="GitHub profile" title="GitHub · Ankurray1">'+GH_MARK+'GitHub</a>':'')+
         '<span class="li-peek" aria-hidden="true"><span class="li-peek-img"></span><span class="li-peek-cap"><b class="in-mark">in</b>A glimpse of my LinkedIn · select to open the full profile</span></span>'+'</div></div></aside></div>'+
@@ -2872,12 +2886,27 @@ document.addEventListener('click',e=>{
   const d=$('#detail'); d.innerHTML='<div class="cr-pop">'+crCard(en)+'<button type="button" class="see3 cr-close" data-close>Close</button></div>'; d.showModal();
 });
 /* certifications: certificate images in a two-column grid, or a paper placeholder when there is no image yet */
+/* a school on the profile card opens Certifications at its certificate, which glows briefly */
+function certGo(id){
+  const el=document.getElementById('c-'+id);if(!el)return;
+  el.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});
+  el.classList.remove('cert-hit');el.offsetWidth;el.classList.add('cert-hit');
+  setTimeout(()=>el.classList.remove('cert-hit'),2600);
+}
+document.addEventListener('click',e=>{
+  const a=e.target.closest('[data-cert-go]');if(!a)return;
+  e.preventDefault();e.stopPropagation();
+  const id=a.dataset.certGo;
+  if(route()==='certs'){certGo(id);return}
+  addEventListener('hashchange',()=>setTimeout(()=>certGo(id),80),{once:true});
+  location.hash='#certs';
+},true);
 function certs(list){
   if(!list.length) return '<p class="empty">Nothing here yet.</p>';
   return '<section class="certs">'+list.filter(c=>c.title).map((c,k)=>{
     const img=/^[a-z0-9-]+$/.test(c.image||'')?c.image:'';
     const ini=String(c.issuer||'').split(/\s+/).filter(w=>/^[A-Z]/.test(w)).map(w=>w[0]).slice(0,3).join('');
-    return '<article class="cert" style="--i:'+k+'">'+(img?'<button type="button" class="cert-img" data-cert="'+esc(img)+'" aria-label="View certificate full size" style="background-image:var(--'+img+')"></button>':'<div class="cert-paper"><span class="cr-mono '+tone(k+2)+'">'+esc(ini)+'</span><b>'+esc(c.title)+'</b><small>'+esc(c.issuer||'')+'</small></div>')+
+    return '<article class="cert" id="'+(img?'c-'+esc(img):'')+'" style="--i:'+k+'">'+(img?'<button type="button" class="cert-img" data-cert="'+esc(img)+'" aria-label="View certificate full size" style="background-image:var(--'+img+')"></button>':'<div class="cert-paper"><span class="cr-mono '+tone(k+2)+'">'+esc(ini)+'</span><b>'+esc(c.title)+'</b><small>'+esc(c.issuer||'')+'</small></div>')+
       '<div class="cert-body"><span class="eyebrow">'+esc(c.date||'')+'</span><h3>'+esc(c.title)+'</h3><p>'+esc(c.issuer||'')+'</p>'+(c.cred?'<small>'+esc(c.cred)+'</small>':'')+(url(c.link)?'<a class="read" href="'+esc(url(c.link))+'" target="_blank" rel="noopener">Verify ↗</a>':'')+'</div></article>';
   }).join('')+'</section>';
 }
