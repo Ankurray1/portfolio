@@ -3438,9 +3438,9 @@ addEventListener('keydown',e=>{
 });
 askMount();
 
-/* ---------- case studies that glide in on the home page ----------
-   On home, a case study card slides in from the left: first after 6 seconds, then again 14–24 seconds after the
-   previous one leaves. If the visitor doesn't take it, it fades back out to the left when its timer runs down
+/* ---------- case studies that glide in, on every page ----------
+   A case study card slides in from the left: first after 6 seconds, then again 14–24 seconds after the previous
+   one leaves, whichever page the visitor is on (a card for the page they're already reading is skipped). If the visitor doesn't take it, it fades back out to the left when its timer runs down
    (the timer pauses while the pointer or focus is on it). The order is the Ask Ankur build twice, then the 0→1
    agent launch twice, then the data and metrics story twice, and round again; the place in the order is kept per visit. */
 const CS_POP_DECK=(()=>{
@@ -3470,9 +3470,10 @@ function csPopFill(el,c){
 }
 function csPopShow(){
   csPopTimer=0;
-  if(route()!=='home')return;
   if(akOpenNow()||document.hidden){csPopTimer=setTimeout(csPopShow,4000);return} // never over the Ask panel or a hidden tab
-  const n=+(csPopStore('cs-pop-i')||0),c=CS_POP_DECK[n%CS_POP_DECK.length],el=csPopMount();
+  let n=+(csPopStore('cs-pop-i')||0);
+  for(let k=0;k<CS_POP_DECK.length&&location.hash==='#'+CS_POP_DECK[n%CS_POP_DECK.length].slug;k++)n++; // not the one they're reading
+  const c=CS_POP_DECK[n%CS_POP_DECK.length],el=csPopMount();
   csPopStore('cs-pop-i',String(n+1));csPopNow=c;
   csPopFill(el,c);
   el.classList.remove('on','out');el.hidden=false;el.offsetWidth;el.classList.add('on');
@@ -3483,18 +3484,17 @@ function csPopHide(why){
   el.classList.remove('on');el.classList.add('out');
   if(why==='dismiss'&&csPopNow)gaEvent('case_promo_dismiss',{case_study:csPopNow.slug});
   setTimeout(()=>{if(el.classList.contains('out')){el.hidden=true;el.classList.remove('out')}},matchMedia('(prefers-reduced-motion: reduce)').matches?0:750);
-  if(route()==='home'){clearTimeout(csPopTimer);csPopTimer=setTimeout(csPopShow,csPopGap())} // the next one, 14–24 s later
+  clearTimeout(csPopTimer);csPopTimer=setTimeout(csPopShow,csPopGap()); // the next one, 14–24 s later
 }
 function csPopSchedule(){
-  clearTimeout(csPopTimer);csPopTimer=0;
-  if(route()!=='home'){csPopHide();clearTimeout(csPopTimer);csPopTimer=0;return}
-  csPopTimer=setTimeout(csPopShow,csPopStore('cs-pop-i')?csPopGap():CS_POP_FIRST);
+  clearTimeout(csPopTimer);csPopTimer=setTimeout(csPopShow,csPopStore('cs-pop-i')?csPopGap():CS_POP_FIRST);
 }
+/* moving between pages keeps the rhythm; only a card for the page just opened steps aside */
+addEventListener('hashchange',()=>{if(csPopNow&&location.hash==='#'+csPopNow.slug)csPopHide()});
 document.addEventListener('click',e=>{
   if(e.target.closest('[data-cs-pop-x]')){csPopHide('dismiss');return}
   if(e.target.closest('[data-cs-pop-go]')&&csPopNow){gaEvent('case_promo_click',{case_study:csPopNow.slug});csPopHide()}
 });
-addEventListener('hashchange',csPopSchedule);
 csPopSchedule();
 $('#detail').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.close()});
 /* coming back from a project page lands on that project's card, not the top of the list */
