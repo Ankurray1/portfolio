@@ -19,9 +19,10 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 const ALLOWED_ORIGINS = [/^https:\/\/ankurray1\.github\.io$/, /^https:\/\/([a-z0-9-]+--)?ankurray[a-z0-9-]*\.netlify\.app$/, /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+)(:\d+)?$/];
 const PER_HOUR = 20;
 const MAX_ANSWER_TOKENS = 450;
+const MAX_ANSWER_TOKENS_FIT = 750; // a job-fit table needs more room
 const MAX_QUESTION = 2000;
 const MAX_JOB_DESCRIPTION = 12000;
-const MAX_ANSWER = 1800;
+const MAX_ANSWER = 2800;
 const LLM_TIMEOUT_MS = 20000;
 const PROFILE_ID = 'profile::main'; // the profile summary is always in context, so years and titles come out exact
 // Tuned on the test questions: genuine questions score >= 0.838, off-topic ones <= 0.798.
@@ -267,7 +268,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: MODEL,
         temperature: 0.1,
-        max_tokens: MAX_ANSWER_TOKENS,
+        max_tokens: jobDescription ? MAX_ANSWER_TOKENS_FIT : MAX_ANSWER_TOKENS,
         stream: wantStream,
         messages: [
           { role: 'system', content: SYSTEM },
@@ -291,7 +292,9 @@ Deno.serve(async (req) => {
   // the answer is final only once its figures are checked against the sources
   const finish = async (full: string, firstTokenMs: number | null) => {
     let { answer, followups } = splitFollowups(full);
-    if (answer.length > MAX_ANSWER) answer = answer.slice(0, MAX_ANSWER - 1).trimEnd() + '…';
+    if (answer.length > MAX_ANSWER) answer = answer.slice(0, answer.lastIndexOf('\n', MAX_ANSWER)).trimEnd();
+    // a reply cut off by the token limit can end mid-line ("- **Stakeholder…"); drop that half-written last line
+    answer = answer.replace(/\n[^\n]*$/, (l) => (l.split('**').length % 2 === 0 ? '' : l)).trim();
     let bad = unverifiedFigures(answer, context), removed: string[] = [];
     // an unsupported figure usually sits in one derived line ("4.3x growth"); drop those key-point lines and keep
     // the answer when everything left checks out. A bad figure in the opening answer still withholds it all.
@@ -300,7 +303,8 @@ Deno.serve(async (req) => {
       if (cleaned !== answer && !unverifiedFigures(cleaned, context).length) { removed = bad; bad = []; answer = cleaned; }
     }
     // the model's own "not covered" reply is a decline, not an answer; its follow-ups still point somewhere useful
-    const declined = /isn['’]t covered|not covered on|can only answer/i.test(answer);
+    // (judged on the opening line only: a fit table can mark one requirement "Not covered on Ankur's site" and still be an answer)
+    const declined = /isn['’]t covered|not covered on|can only answer/i.test(answer.split('\n')[0]) && !/^\s*(\||@stat)/m.test(answer);
     const status = !answer ? 'retrieval_only' : declined ? 'declined' : bad.length ? 'unverified' : 'answered';
     const id = await log({ status, answer, sources, verified: !bad.length, unverified: bad.length ? bad : removed.length ? removed : null, first_token_ms: firstTokenMs });
     const shown = status === 'answered' || status === 'declined';

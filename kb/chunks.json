@@ -1,6 +1,6 @@
 {
- "built": "2026-11-01T15:29:25.188Z",
- "count": 242,
+ "built": "2026-11-01T15:52:28.996Z",
+ "count": 247,
  "chunks": [
   {
    "id": "profile::main",
@@ -768,7 +768,7 @@
    "title": "Ask Ankur: how I built a RAG-based AI agent for my portfolio",
    "section": "Summary",
    "url": "#project/ask-ankur-rag-agent",
-   "content": "Ask Ankur: how I built a RAG-based AI agent for my portfolio — Summary\n· 16/16 evals|≈2 s first words|Live · ask-ankur-rag-agent · Ran a competitive teardown and wrote the PRD, goals and metrics · Built hybrid retrieval, streaming answers and a figure fact-checker · Designed the assistant end to end, then shipped it with evals and analytics · Frontend · HTML, CSS, vanilla JavaScript · Server-Sent Events streaming · pdf.js · GitHub Pages and Netlify · Backend · Supabase Edge Functions (Deno, TypeScript) · Postgres with row-level security · hashed-IP rate limits · AI and retrieval · OpenAI gpt-4.1-mini · gte-small embeddings · pgvector plus full-text search · reciprocal rank fusion · QA and evals · 16-question eval suite · figure fact-checker · relevance gate · desktop, phone and dark-mode checks · Analytics · GA4 events and Data API · question and feedback log · private insights dashboard · Build partner · Claude Code, directed with role-based zero-shot prompts · Supabase, Postgres, pgvector, Deno, TypeScript, OpenAI gpt-4.1-mini, gte-small, Server-Sent Events, pdf.js, GA4, Claude Code"
+   "content": "Ask Ankur: how I built a RAG-based AI agent for my portfolio — Summary\n· 16/16 evals|≈2 s first words|Live · ask-ankur-rag-agent · Ran a competitive teardown and wrote the PRD, goals and metrics · Built hybrid retrieval, streaming answers and a figure fact-checker · Designed the assistant end to end, then shipped it with evals and analytics · Frontend · HTML, CSS, vanilla JavaScript · Server-Sent Events streaming · pdf.js · GitHub Pages and Netlify · Backend · Supabase Edge Functions (Deno, TypeScript) · Postgres with row-level security · hashed-IP rate limits · AI and retrieval · OpenAI gpt-4.1-mini · gte-small embeddings · pgvector plus full-text search · reciprocal rank fusion · QA and evals · 16-question eval suite · figure fact-checker · relevance gate · desktop, phone and dark-mode checks · Analytics · GA4 events and Data API · question and feedback log · private insights dashboard · Build partner · Claude Code, directed with role-based zero-shot prompts · Supabase, Postgres, pgvector, Deno, TypeScript, OpenAI gpt-4.1-mini, gte-small, Server-Sent Events, pdf.js, GA4, Claude Code · img/ask-ankur/answer.webp · Impact answer · Ask Ankur answering a question about impact at Vantage Circle with stat tiles and cited sources · A two-line answer first, written for a recruiter who skims · Stat tiles for the results: every figure is checked against the site before it's shown · Numbered citations link each fact to the page it came from · img/ask-ankur/fit.webp · Job-fit check · A job description PDF checked against Ankur's experience, with Strong and Gap labels per requirement · Attach a job description PDF (up to 3 pages) · Each requirement gets evidence and a Strong, Partial or Gap label · Gaps are stated plainly, never papered over · img/ask-ankur/feedback.webp · Feedback loop · The feedback form after a thumbs down, with reason chips and a note · Thumbs up or down on every answer · Then why: reason chips plus an optional note · Every vote lands in the insights dashboard · img/ask-ankur/launcher.webp · Launcher · The Ask Ankur launcher unfolding into a teaser question · A quiet circle with my photo in a ring of flowing colour · Every few seconds it asks a question worth clicking · One click asks that question straight away · img/ask-ankur/phone.webp · On a phone · Ask Ankur as a full-height sheet on a phone · A full-height sheet on phones · The same answer template and fit table · Designed for one-thumb use"
   },
   {
    "id": "project:project/ask-ankur-rag-agent:why-i-built-it",
@@ -883,6 +883,38 @@
    "content": "Ask Ankur: how I built a RAG-based AI agent for my portfolio (The case study) — QA and evals\nEval suite · 16 / 16 · final run · First words · ≈2.1 s · median in testing · Full answer · ≈3.1 s · median in testing · Off-topic decline · ≈0.5 s · no LLM call. Every release was also checked by hand in the browser: desktop and phone sizes, light and dark mode, slow and stopped answers, the hourly limit, and a broken connection.."
   },
   {
+   "id": "project:project/ask-ankur-rag-agent:success-metrics-what-i-track-and-why-1",
+   "kind": "project",
+   "title": "Ask Ankur: how I built a RAG-based AI agent for my portfolio (The case study)",
+   "section": "Success metrics: what I track and why",
+   "url": "#project/ask-ankur-rag-agent",
+   "content": "Ask Ankur: how I built a RAG-based AI agent for my portfolio (The case study) — Success metrics: what I track and why\nI set the metrics before launch so the first week of data would answer a question, not start a debate. One north-star metric, three that explain it, and guardrails that must never move.. Metric · Definition · Target · Launch day · North star: CV requests · CV emails requested from the site, the clearest sign a recruiter wants to talk · Grow week on week · 5 · Answer rate · Share of questions answered from the site (not declined or held back) · 85% or more · 86% (12 of 14) · Helpful rate · 👍 as a share of all votes, read together with the reasons · 70% or more · 1 👍, 1 👎 · Time to first words · Median time from asking to the first streamed words · 2.5 s or less · 2.1 s · Full answer time · Median time to the complete, fact-checked answer · 5 s or less · 4.1 s · Guardrail: unverified figures shown · Answers that reach a visitor with a number no source states · Always 0 · 0 (2 caught and removed) · Guardrail: off-topic answered · Questions outside my work that get an answer anyway · Always 0 · 0. Launch-day numbers come mostly from my own test questions, so they prove the pipeline works rather than how recruiters behave. The targets are what I'll judge it on once real traffic builds up.. How I read them together. Answer rate falls · Look at the most-asked questions that were declined: either the site is missing that content, or the relevance gate is too strict."
+  },
+  {
+   "id": "project:project/ask-ankur-rag-agent:success-metrics-what-i-track-and-why-2",
+   "kind": "project",
+   "title": "Ask Ankur: how I built a RAG-based AI agent for my portfolio (The case study)",
+   "section": "Success metrics: what I track and why",
+   "url": "#project/ask-ankur-rag-agent",
+   "content": "Ask Ankur: how I built a RAG-based AI agent for my portfolio (The case study) — Success metrics: what I track and why\n· Helpful rate falls · Read the 👎 reasons and notes; \"Too vague\" points at the prompt, \"Missing information\" at the content. · Speed slips · Compare time to first words with full answer time: the first is retrieval and the model, the second includes the fact-check. · CV requests flat · Check whether Ask users reach the \"Get Ankur's CV\" chip; if they do and don't click, the offer needs work, not the AI.."
+  },
+  {
+   "id": "project:project/ask-ankur-rag-agent:how-ga4-is-connected-1",
+   "kind": "project",
+   "title": "Ask Ankur: how I built a RAG-based AI agent for my portfolio (The case study)",
+   "section": "How GA4 is connected",
+   "url": "#project/ask-ankur-rag-agent",
+   "content": "Ask Ankur: how I built a RAG-based AI agent for my portfolio (The case study) — How GA4 is connected\nGoogle Analytics answers who visits and what they open; my own log answers what they ask. I connected both and put them on one page.. 1. The tag · The Google tag (G-89KBYM186Y) sits at the top of the page's head. · Automatic page views are turned off, because the site moves between sections with # links that GA4 doesn't count as new pages. · 2. A page view per section · Every time the section changes, the site sends its own page_view with the full address and a title like \"Ankur Ray · case/copilot-agent-wipro\". · That is what lets the dashboard show which case studies people actually open. · 3. Events for the assistant · ask_open, ask_question (with job description yes/no and follow-up yes/no), ask_answer (with the outcome), ask_feedback and ask_feedback_detail (vote and reasons), and cv_request. · No question text, note or email is ever sent to Google. · 4. Reading GA4 back · A Google Cloud service account has Viewer access to the GA4 property; its key is stored as an encrypted Supabase secret, never in the code. · The insights function signs a token with it and calls the GA4 Data API: totals, active users per day, country and city, page views per section, and a realtime count. · 5. One dashboard · The private insights page merges GA4 traffic with the question log: questions, outcomes, latency, feedback, fact-checker catches and CV requests. · A country filter narrows cities and sections; the page opens only with an access key.."
+  },
+  {
+   "id": "project:project/ask-ankur-rag-agent:how-ga4-is-connected-2",
+   "kind": "project",
+   "title": "Ask Ankur: how I built a RAG-based AI agent for my portfolio (The case study)",
+   "section": "How GA4 is connected",
+   "url": "#project/ask-ankur-rag-agent",
+   "content": "Ask Ankur: how I built a RAG-based AI agent for my portfolio (The case study) — How GA4 is connected\nEvent · When it fires · What it carries · page_view · Each section a visitor opens · Full address and section title · ask_open · The Ask Ankur panel opens · Which page it was opened on · ask_question · A question is sent · Job description attached, follow-up or not · ask_answer · The answer is final · Outcome: answered, declined, held back · ask_feedback · 👍 or 👎 · The vote · ask_feedback_detail · The why form is sent · Vote, reasons, whether a note was written · cv_request · The CV email is sent · Nothing else."
+  },
+  {
    "id": "project:project/ask-ankur-rag-agent:step-by-step-from-groundwork-to-live-1",
    "kind": "project",
    "title": "Ask Ankur: how I built a RAG-based AI agent for my portfolio (The case study)",
@@ -913,6 +945,14 @@
    "section": "What I learned",
    "url": "#project/ask-ankur-rag-agent",
    "content": "Ask Ankur: how I built a RAG-based AI agent for my portfolio (The case study) — What I learned\nTrust is the product · A grounded \"that isn't covered\" is worth more than a fluent guess. Citations and the fact-checker do more for credibility than any styling. · Evals before opinions · Every disagreement about quality became a test question. The suite caught bugs I would not have spotted by reading answers. · Retrieval shapes the answer · The 60/40 balance needed both a prompt rule and a retrieval quota; the prompt alone couldn't fix what the search returned. · Ship with a feedback loop · The log, the 👍/👎 reasons and the dashboard went live with the feature, so the next iteration starts from data.."
+  },
+  {
+   "id": "project:project/ask-ankur-rag-agent:the-insights-dashboard",
+   "kind": "project",
+   "title": "Ask Ankur: how I built a RAG-based AI agent for my portfolio (The case study)",
+   "section": "The insights dashboard",
+   "url": "#project/ask-ankur-rag-agent",
+   "content": "Ask Ankur: how I built a RAG-based AI agent for my portfolio (The case study) — The insights dashboard\nEverything above comes together on one private page, so I never have to open GA4 or the database to know how Ask Ankur is doing. These are real screenshots from launch day.. img/ask-ankur/dashboard.webp · The insights dashboard: questions, answer rate, helpful rate, time to first words, CV requests and website traffic from GA4 · Top of the dashboard: Ask Ankur's numbers, then website traffic from GA4. Traffic shows zero here because GA4 takes a day to process a new property; the live count already reads visitors on the site.. img/ask-ankur/dashboard-quality.webp · The most-asked questions and the feedback card with reasons and notes · Further down: the most-asked questions and every vote with its reasons and note. Below these sit recent questions and the fact-checker's catches.."
   },
   {
    "id": "project:project/claude-code-in-copilot:summary-1",
