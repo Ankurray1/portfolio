@@ -1,6 +1,16 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Ankur Ray: AI Product Manager (B2B SaaS and agentic AI) and founder. Projects, case studies, career timeline and certifications."><title>Ankur Ray Portfolio</title><meta name="claude:viewport-fit-sides" content="cover"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Anton&display=swap"><style id="sty">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-89KBYM186Y"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-89KBYM186Y', { send_page_view: false }); // the site sends a page_view per section (see gaPage)
+</script>
+<meta name="description" content="Ankur Ray: AI Product Manager (B2B SaaS and agentic AI) and founder. Projects, case studies, career timeline and certifications."><title>Ankur Ray Portfolio</title><meta name="claude:viewport-fit-sides" content="cover"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Anton&display=swap"><style id="sty">
 /* Layout: booking-site grammar — soft grey ground, one pill filter bar, tilted photo cards around a big headline; color lives only in the "photos". */
 :root{
   --bg:#ECECEA; --surface:#FFFFFF; --sunk:#E1E1DD; --ink:#151515; --muted:#6C6C67; --line:#D5D5D0;
@@ -1510,6 +1520,12 @@ html[data-mode="founder"] .ak-launch,html[data-mode="founder"] .ak-hello{display
 .ak-box:focus-within{background:linear-gradient(var(--bg),var(--bg)) padding-box,conic-gradient(from var(--ak-a),#4A93B2,#7B6BB0,#C9667A,#E0A458,#4A93B2) border-box;animation:ak-orb 4s linear infinite;box-shadow:0 0 0 4px color-mix(in srgb,#7B6BB0 9%,transparent),0 10px 28px -16px color-mix(in srgb,#7B6BB0 70%,transparent)}
 .ak-send:not(:disabled){color:#fff;background:linear-gradient(135deg,#4A93B2,#7B6BB0 60%,#C9667A);background-size:160% 160%;box-shadow:0 6px 16px -8px #7B6BB0;animation:ak-pan 4s ease-in-out infinite alternate}
 @keyframes ak-pan{to{background-position:100% 100%}}
+/* launcher: a quiet circle by default that unfolds into a short question every few seconds */
+.ak-launch{max-width:calc(100vw - 28px);transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,opacity .2s,padding .55s cubic-bezier(.2,.8,.2,1),gap .55s cubic-bezier(.2,.8,.2,1)}
+.ak-launch-t{display:block;max-width:300px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13.5px;transition:max-width .6s cubic-bezier(.2,.8,.2,1),opacity .35s ease .15s}
+.ak-launch.min{padding:0 6px;gap:0}
+.ak-launch.min .ak-launch-t{max-width:0;opacity:0;transition:max-width .45s cubic-bezier(.4,0,.2,1),opacity .15s}
+@media (max-width:640px){.ak-launch-t{max-width:calc(100vw - 110px)}}
 @media (prefers-reduced-motion:reduce){.ak-launch,.ak-launch::before,.ak-launch-t,.ak-orb>i,.ak::after,.ak-aura i,.ak-sugg button,.ak-card,.ak-card.live,.ak-sec,.ak-skel i,.ak-box:focus-within,.ak-send:not(:disabled){animation:none}}
 
 /* the visual block under each answer: stat tiles, tables and fit pills */
@@ -1846,7 +1862,7 @@ function cvFill(v){
   const f=$('#cv-form'), inp=$('#cv-email'); if(!f||!inp) return;
   inp.value=v; inp.removeAttribute('aria-invalid'); $('#cv-err').hidden=true;
   f.querySelector('.cv-suggest').hidden=true;
-  inp.focus({preventScroll:true}); inp.setSelectionRange(v.length,v.length);
+  inp.focus({preventScroll:true}); try{inp.setSelectionRange(v.length,v.length)}catch(_){} // email fields don't support selection in every browser
 }
 document.addEventListener('click',e=>{
   const use=e.target.closest('[data-cv-use]'); if(use){cvFill(use.dataset.cvUse);return}
@@ -1917,7 +1933,7 @@ document.addEventListener('submit',async e=>{
   err.hidden=true;inp.removeAttribute('aria-invalid');btn.disabled=true;
   const f=e.target; cvBusy(f,v);
   const [res]=await Promise.all([sendCvRequest(v,f.querySelector('.cv-hp')?.value),new Promise(r=>setTimeout(r,1600))]);
-  btn.disabled=false;if(res==='sent'){inp.value='';try{localStorage.setItem(CV_LAST,v)}catch(_){}}
+  btn.disabled=false;if(res==='sent'){gaEvent('cv_request');inp.value='';try{localStorage.setItem(CV_LAST,v)}catch(_){}}
   cvResult(f,v,res);
 });
 function spotlightPreview(h){
@@ -2996,6 +3012,10 @@ function askEntry(){
     '<span class="ask-soon-cta"><span>Ask a question</span>'+AK.arrow+'</span></button>';
 }
 
+function gaEvent(name,params){try{if(window.gtag)gtag('event',name,params||{})}catch(_){}}
+/* sections live behind #links, which Analytics doesn't count as new pages; each one is sent as its own page view */
+function gaPage(){gaEvent('page_view',{page_location:location.href,page_path:location.pathname+location.hash,page_title:'Ankur Ray · '+(location.hash.slice(1)||'home')})}
+gaPage();addEventListener('hashchange',gaPage);
 let askChat=[],askPdf=null,askBusy=null,askLastFocus=null,askWarm=false;
 try{askChat=JSON.parse(sessionStorage.getItem('ak-chat')||'[]').filter(t=>t&&t.q&&t.status!=='pending'&&t.status!=='streaming')}catch(_){}
 const akSave=()=>{try{sessionStorage.setItem('ak-chat',JSON.stringify(askChat.slice(-12)))}catch(_){}};
@@ -3004,7 +3024,7 @@ const akOpenNow=()=>document.documentElement.classList.contains('ak-on');
 function askMount(){
   if($('#ak')) return;
   document.body.insertAdjacentHTML('beforeend',
-    '<button type="button" class="ak-launch" data-ak-open aria-haspopup="dialog" aria-controls="ak">'+akFace()+'<span class="ak-launch-t">Ask Ankur</span></button>'+
+    '<button type="button" class="ak-launch min" data-ak-open aria-haspopup="dialog" aria-controls="ak" aria-label="Ask Ankur, AI assistant">'+akFace()+'<span class="ak-launch-t" aria-hidden="true">Ask Ankur</span></button>'+
     '<div class="ak-hello" hidden><button type="button" class="ak-hello-body" data-ak-open><b>Hi, I’m Ankur’s AI.</b> Ask about his AI launches, results or fit for your role. Answers in seconds, with sources.</button><button type="button" class="ak-hello-x" data-ak-hello-x aria-label="Dismiss">'+AK.close+'</button></div>'+
     '<div class="ak-veil" data-ak-close hidden></div>'+
     '<section id="ak" class="ak" role="dialog" aria-modal="true" aria-labelledby="ak-title" hidden><div class="ak-aura" aria-hidden="true"><i></i><i></i><i></i></div>'+
@@ -3018,16 +3038,27 @@ function askMount(){
         '<p class="ak-fine" id="ak-fine">Answers come only from this site and can be imperfect. Every fact links to its source.</p>'+
         '<input type="file" id="ak-pdf" accept="application/pdf,.pdf" hidden></form>'+
     '</section>');
-  // a one-time hello next to the launcher, like a host who notices you're browsing
-  let seen=false;try{seen=!!sessionStorage.getItem('ak-hello')}catch(_){}
-  if(!seen&&!askChat.length) setTimeout(()=>{const h=$('.ak-hello');if(!h||akOpenNow())return;h.hidden=false;setTimeout(akHelloOff,14000)},6000);
+  akTeaseT=setTimeout(akTease,3000);
+}
+/* the launcher rests as a circle and, every few seconds, opens to ask a question worth clicking;
+   it stays quiet while the panel is open, the tab is hidden or the pointer is on it, and stops once the visitor has asked something */
+const AK_TEASE=['Is Ankur a fit for your AI PM role?','How did he hit 200+ users in 2 weeks?','What did he ship at Vantage Circle?','How does he run AI evals?','How did he grow users from 35K to 150K?'];
+let akTeaseI=0,akTeaseT=0;
+function akTease(){
+  const b=$('.ak-launch');if(!b)return;clearTimeout(akTeaseT);
+  const open=!b.classList.contains('min'),hover=b.matches(':hover');
+  if(open&&hover){akTeaseT=setTimeout(akTease,1500);return}
+  if(open){b.classList.add('min');delete b.dataset.akTease;b.setAttribute('aria-label','Ask Ankur, AI assistant');akTeaseT=setTimeout(akTease,4000);return}
+  const quiet=akOpenNow()||document.hidden||hover||askChat.length||document.documentElement.dataset.mode==='founder'||matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!quiet){const q=AK_TEASE[akTeaseI++%AK_TEASE.length];b.querySelector('.ak-launch-t').textContent=q;b.dataset.akTease=q;b.setAttribute('aria-label','Ask Ankur: '+q);b.classList.remove('min')}
+  akTeaseT=setTimeout(akTease,quiet?4000:4500);
 }
 function akHelloOff(){const h=$('.ak-hello');if(h)h.hidden=true;try{sessionStorage.setItem('ak-hello','1')}catch(_){}}
 
 function akOpen(){
   askMount(); akHelloOff();
   const p=$('#ak'),veil=$('.ak-veil');
-  if(!akOpenNow()){askLastFocus=document.activeElement;p.hidden=false;veil.hidden=false;akRender();p.offsetWidth;document.documentElement.classList.add('ak-on')}
+  if(!akOpenNow()){gaEvent('ask_open',{page:route()});askLastFocus=document.activeElement;p.hidden=false;veil.hidden=false;akRender();p.offsetWidth;document.documentElement.classList.add('ak-on')}
   if(!askWarm){askWarm=true;fetch(ASK_URL).catch(()=>{})} // wakes the backend while the visitor reads the suggestions
   setTimeout(()=>$('#ak-ques')?.focus({preventScroll:true}),matchMedia('(max-width:640px)').matches?350:60);
 }
@@ -3165,6 +3196,7 @@ async function akAsk(raw,retryOf){
   if(jd)Object.defineProperty(t,'jdData',{value:jd,enumerable:false}); // kept for a retry, never saved
   const q0=$('#ak-ques');if(q0){q0.value='';q0.style.height=''}askPdf=null;akFileRow();
   const ctrl=new AbortController();askBusy=ctrl;akRender();
+  gaEvent('ask_question',{has_job_description:!!jd,follow_up:i>0});
   const timer=setTimeout(()=>ctrl.abort('timeout'),ASK_TIMEOUT);
   const history=askChat.slice(0,i).filter(x=>x.status==='answered').slice(-2).map(x=>({q:x.q,a:x.a}));
   try{
@@ -3184,16 +3216,18 @@ async function akAsk(raw,retryOf){
     }
   }catch(e){t.status=ctrl.signal.reason==='stop'?'stopped':'error';if(t.status==='error')t.a=''}
   clearTimeout(timer);askBusy=null;akSave();akRender();
+  gaEvent('ask_answer',{ask_status:t.status});
 }
 function akVote(i,vote){
   const t=askChat[i];if(!t||!t.id)return;t.vote=t.vote===vote?0:vote;akSave();akPaint(i);
+  if(t.vote)gaEvent('ask_feedback',{vote:t.vote===1?'up':'down'});
   if(t.vote)fetch(ASK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({feedback:{id:t.id,vote:t.vote}})}).catch(()=>{});
 }
 
 document.addEventListener('click',e=>{
   const x=e.target.closest('[data-ak-open],[data-ak-close],[data-ak-hello-x],[data-ak-new],[data-ak-ask],[data-ak-pdf],[data-ak-pdf-x],[data-ak-stop],[data-ak-copy],[data-ak-vote],[data-ak-retry],[data-ak-src],[data-ak-cv]');if(!x)return;
   const d=x.dataset;
-  if(d.akOpen!==undefined){e.preventDefault();akOpen()}
+  if(d.akOpen!==undefined){e.preventDefault();const q=x.dataset.akTease;akOpen();if(q&&!askBusy)akAsk(q)} // a teaser click asks that question straight away
   else if(d.akClose!==undefined)akClose();
   else if(d.akHelloX!==undefined)akHelloOff();
   else if(d.akNew!==undefined){if(askBusy)askBusy.abort('stop');askChat=[];askPdf=null;akSave();akFileRow();akRender();$('#ak-ques').focus()}
