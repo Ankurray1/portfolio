@@ -1582,6 +1582,26 @@ button.ak-entry:hover .ask-soon-cta svg{transform:translateX(3px)}
 .m-founder button.ak-entry .ask-soon-cta{background:linear-gradient(120deg,#4A93B2,#7B6BB0 55%,#C9667A)}
 @media (max-width:560px){button.ak-entry .ask-soon-cta{width:40px;height:40px;padding:0;justify-content:center}button.ak-entry .ask-soon-cta>span{display:none}button.ask.ai.ask-soon.ak-entry{gap:10px}}
 @media (prefers-reduced-motion:reduce){.ak-mesh,.ak-mesh:before,.ak-mesh:after,.ak-spark svg,.ask.ai.ask-soon.ak-entry .ak-mesh,.ask.ai.ask-soon.ak-entry .ak-mesh:before,.ask.ai.ask-soon.ak-entry .ak-mesh:after,button.ask.ai.ask-soon.ak-entry,button.ask.ai.ask-soon.ak-entry:before,button.ask.ai.ask-soon.ak-entry:after,button.ak-entry .ask-soon-cta{animation:none!important}}
+
+/* the "why" form after a thumbs up or down */
+.ak-fb{display:grid;gap:10px;padding:12px;border-radius:14px;background:color-mix(in srgb,#7B6BB0 6%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,#7B6BB0 22%,var(--line));animation:ak-in .3s ease both}
+.ak-fb-h{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13.5px}
+.ak-fb-h b{font-weight:600}
+.ak-fb-h .ak-icon{width:28px;height:28px;margin:-4px -4px -4px 0}
+.ak-fb-chips{display:flex;flex-wrap:wrap;gap:6px}
+.ak-fb-chip{all:unset;box-sizing:border-box;cursor:pointer;padding:6px 11px;border-radius:999px;font-size:12.5px;line-height:1.3;border:1px solid var(--line);background:var(--surface);color:var(--ink);transition:background-color .15s,border-color .15s,color .15s}
+.ak-fb-chip:hover{border-color:color-mix(in srgb,#7B6BB0 45%,var(--line))}
+.ak-fb-chip[aria-pressed="true"]{color:#fff;border-color:transparent;background:linear-gradient(120deg,#4A93B2,#7B6BB0)}
+.ak-fb textarea{font:400 14px/1.4 var(--display);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;resize:vertical;min-height:52px;outline:0}
+.ak-fb textarea:focus{border-color:color-mix(in srgb,#7B6BB0 55%,var(--line));box-shadow:0 0 0 3px color-mix(in srgb,#7B6BB0 14%,transparent)}
+.ak-fb-f{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ak-fb-f small{color:var(--muted);font-size:11.5px}
+.ak-fb-send{all:unset;cursor:pointer;flex:none;padding:7px 14px;border-radius:999px;font:600 13px/1.2 var(--display);color:#fff;background:linear-gradient(120deg,#4A93B2,#7B6BB0 55%,#C9667A);transition:opacity .2s}
+.ak-fb-send:disabled{opacity:.35;cursor:default}
+.ak-fb-chip:focus-visible,.ak-fb-send:focus-visible{outline:2px solid #4A93B2;outline-offset:2px}
+.ak-fb-done{display:flex;align-items:center;gap:6px;margin:0;font-size:12.5px;color:var(--muted);animation:ak-in .3s ease both}
+.ak-fb-done svg{width:15px;height:15px;color:#22A06B}
+@media (max-width:640px){.ak-fb textarea{font-size:16px}}
 </style><div id="root"><div id="view"></div><aside id="harness" hidden aria-label="Harness"></aside><dialog id="detail"></dialog><button id="hdot" hidden aria-label="Open harness" title="Harness"></button></div><style id="eval-dataset-style">
 /* Give the evaluation case study a four-cell feature footprint in the existing desktop bento. */
 @media(min-width:981px){.grid.bento{grid-template-columns:repeat(12,minmax(0,1fr));grid-template-areas:'a a a a a a a b b c c c' 'e e e e e e e b b c c c' 'g g g g f f f d d h h h';align-items:stretch}.grid.bento [data-slot=a] .photo{aspect-ratio:auto;min-height:240px}.grid.bento [data-slot=e] .photo{aspect-ratio:auto;min-height:270px;padding:18px;gap:8px}.grid.bento [data-slot=b] .photo,.grid.bento [data-slot=c] .photo{aspect-ratio:auto;min-height:380px}.grid.bento [data-slot=d] .photo,.grid.bento [data-slot=f] .photo{aspect-ratio:16/10}.grid.bento [data-slot=g] .photo{aspect-ratio:auto;min-height:180px}.grid.bento [data-slot=e] .cs-face .big{font-size:clamp(34px,3vw,48px)!important}.grid.bento [data-slot=e] h3{font-size:clamp(22px,2.2vw,30px);line-height:1.15}.grid.bento [data-slot=e] .sum{display:block;font-size:15px;line-height:1.55}.grid.bento [data-slot=e] .cf-label{font-size:15px}.grid.bento [data-slot=e] .cf-keys span{font-size:12px;padding:7px 10px}.grid.bento [data-slot=e] .cf-eval-viz{min-height:86px;gap:6px;padding:8px;margin-top:6px}}
@@ -3130,7 +3150,7 @@ function akBody(t,i){
     return akAnswer(t,false)+(t.status==='stopped'?'<p class="ak-note">Stopped.</p>':'')+
       (t.status==='answered'?'<div class="ak-acts"><button type="button" class="ak-icon" data-ak-copy="'+i+'" aria-label="Copy answer" title="Copy">'+AK.copy+'</button>'+
         '<button type="button" class="ak-icon'+(t.vote===1?' on':'')+'" data-ak-vote="1" data-i="'+i+'" aria-label="Helpful" aria-pressed="'+(t.vote===1)+'" title="Helpful">'+AK.up+'</button>'+
-        '<button type="button" class="ak-icon'+(t.vote===-1?' on':'')+'" data-ak-vote="-1" data-i="'+i+'" aria-label="Not helpful" aria-pressed="'+(t.vote===-1)+'" title="Not helpful">'+AK.down+'</button>'+(t.vote?'<small>Thanks for the feedback</small>':'')+'</div>':'')+akFollow(t,i);
+        '<button type="button" class="ak-icon'+(t.vote===-1?' on':'')+'" data-ak-vote="-1" data-i="'+i+'" aria-label="Not helpful" aria-pressed="'+(t.vote===-1)+'" title="Not helpful">'+AK.down+'</button>'+'</div>'+akFbForm(t,i):'')+akFollow(t,i);
   if(['declined','no_match','policy','rate_limited','invalid'].includes(t.status)){
     const more=t.status==='no_match'&&i===askChat.length-1&&!(t.followups||[]).length?{...t,followups:ASK_SUGG.slice(0,2)}:t;
     return '<p>'+akMail(esc(String(t.a||'').replace(/\s*\[\d+\]/g,'')))+'</p>'+akFollow(more,i)}
@@ -3218,8 +3238,38 @@ async function akAsk(raw,retryOf){
   clearTimeout(timer);askBusy=null;akSave();akRender();
   gaEvent('ask_answer',{ask_status:t.status});
 }
+/* after a thumbs up or down, ask why: a few reason chips and an optional note. The vote is saved at once;
+   the reasons follow when the visitor sends them (keep the chips in step with FEEDBACK_REASONS in the ask function) */
+const AK_FB={up:['Answered my question','Clear and quick','Useful numbers','Good sources'],
+  down:["Didn't answer my question",'Not accurate','Too vague','Too long','Missing information']};
+function akFbForm(t,i){
+  if(!t.vote||t.fbDone==='skip')return '';
+  if(t.fbDone)return '<p class="ak-fb-done">'+AK.check+'Thanks. Your feedback helps Ankur improve these answers.</p>';
+  const up=t.vote===1;
+  return '<form class="ak-fb" data-ak-fb="'+i+'" novalidate><div class="ak-fb-h"><b>'+(up?'Glad it helped. What worked?':'Sorry about that. What went wrong?')+'</b>'+
+    '<button type="button" class="ak-icon" data-ak-fb-x="'+i+'" aria-label="Skip feedback" title="Skip">'+AK.close+'</button></div>'+
+    '<div class="ak-fb-chips" role="group" aria-label="Pick any that apply">'+AK_FB[up?'up':'down'].map(o=>'<button type="button" class="ak-fb-chip" aria-pressed="false" data-ak-fb-r="'+esc(o)+'">'+esc(o)+'</button>').join('')+'</div>'+
+    '<textarea maxlength="500" rows="2" aria-label="Your note" placeholder="'+(up?'Anything else you liked? (optional)':'What were you looking for? (optional)')+'"></textarea>'+
+    '<div class="ak-fb-f"><small>Please don’t include personal details.</small><button type="submit" class="ak-fb-send" disabled>Send feedback</button></div></form>';
+}
+function akFbSend(f){
+  const i=+f.dataset.akFb,t=askChat[i];if(!t||!t.id||!t.vote)return;
+  const reasons=[...f.querySelectorAll('.ak-fb-chip[aria-pressed="true"]')].map(b=>b.dataset.akFbR),note=f.querySelector('textarea').value.trim().slice(0,500);
+  if(!reasons.length&&!note)return;
+  t.fbDone=true;akSave();akPaint(i);
+  gaEvent('ask_feedback_detail',{vote:t.vote===1?'up':'down',reasons:reasons.join(', '),has_note:!!note}); // the note itself stays out of Analytics
+  fetch(ASK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({feedback:{id:t.id,vote:t.vote,reasons,note}})}).catch(()=>{});
+}
+const akFbReady=f=>{const b=f.querySelector('.ak-fb-send');if(b)b.disabled=!f.querySelector('.ak-fb-chip[aria-pressed="true"]')&&!f.querySelector('textarea').value.trim()};
+document.addEventListener('click',e=>{
+  const c=e.target.closest('[data-ak-fb-r]');if(c){c.setAttribute('aria-pressed',String(c.getAttribute('aria-pressed')!=='true'));akFbReady(c.closest('.ak-fb'));return}
+  const x=e.target.closest('[data-ak-fb-x]');if(x){const t=askChat[+x.dataset.akFbX];if(t){t.fbDone='skip';akSave();akPaint(+x.dataset.akFbX)}}
+});
+document.addEventListener('input',e=>{const f=e.target.closest&&e.target.closest('.ak-fb');if(f)akFbReady(f)});
+document.addEventListener('submit',e=>{if(e.target.matches&&e.target.matches('.ak-fb')){e.preventDefault();akFbSend(e.target)}});
 function akVote(i,vote){
-  const t=askChat[i];if(!t||!t.id)return;t.vote=t.vote===vote?0:vote;akSave();akPaint(i);
+  const t=askChat[i];if(!t||!t.id)return;t.vote=t.vote===vote?0:vote;t.fbDone=false;akSave();akPaint(i);
+  if(t.vote)setTimeout(()=>{const f=document.querySelector('.ak-fb[data-ak-fb="'+i+'"]'),log=$('#ak-log');if(f&&log)f.scrollIntoView({block:'nearest',behavior:'smooth'})},60);
   if(t.vote)gaEvent('ask_feedback',{vote:t.vote===1?'up':'down'});
   if(t.vote)fetch(ASK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({feedback:{id:t.id,vote:t.vote}})}).catch(()=>{});
 }

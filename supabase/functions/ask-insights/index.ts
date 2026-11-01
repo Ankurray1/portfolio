@@ -1,6 +1,6 @@
 // Ask Ankur insights · the numbers behind the site assistant, for Ankur only.
 // POST {"days": 7 | 30 | 90} with header x-insights-key → summary, daily counts, outcomes, top questions,
-// disliked answers and recent questions. The key is checked against SHA-256 hashes in public.insights_keys.
+// feedback (votes with their reasons and notes) and recent questions. The key is checked against SHA-256 hashes in public.insights_keys.
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -19,7 +19,7 @@ const sha256 = async (s: string) =>
   Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))))
     .map((b) => b.toString(16).padStart(2, '0')).join('');
 
-type Row = { id: string; created_at: string; question: string; status: string; answer: string | null; feedback: number | null; first_token_ms: number | null; total_ms: number | null; has_jd: boolean; unverified: string[] | null };
+type Row = { id: string; created_at: string; question: string; status: string; answer: string | null; feedback: number | null; first_token_ms: number | null; total_ms: number | null; has_jd: boolean; unverified: string[] | null; feedback_reasons: string[] | null; feedback_note: string | null };
 
 const median = (xs: number[]) => {
   if (!xs.length) return null;
@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
   since.setUTCHours(0, 0, 0, 0);
 
   const [{ data: rows, error }, { count: cvCount }] = await Promise.all([
-    db.from('ask_log').select('id, created_at, question, status, answer, feedback, first_token_ms, total_ms, has_jd, unverified')
+    db.from('ask_log').select('id, created_at, question, status, answer, feedback, first_token_ms, total_ms, has_jd, unverified, feedback_reasons, feedback_note')
       .gte('created_at', since.toISOString()).order('created_at', { ascending: false }).limit(5000),
     db.from('cv_requests').select('id', { count: 'exact', head: true }).gte('requested_at', since.toISOString()),
   ]);
@@ -90,7 +90,12 @@ Deno.serve(async (req) => {
     daily,
     outcomes,
     top_questions: [...top.values()].sort((a, b) => b.count - a.count).slice(0, 10),
-    disliked: log.filter((r) => r.feedback === -1).slice(0, 20).map(({ created_at, question, answer }) => ({ created_at, question, answer })),
+    // every vote with the reasons and note that came with it; the answer text travels with thumbs-down only
+    feedback: log.filter((r) => r.feedback).slice(0, 30).map((r) => ({ created_at: r.created_at, question: r.question, vote: r.feedback, reasons: r.feedback_reasons ?? [], note: r.feedback_note, answer: r.feedback === -1 ? r.answer : null })),
+    reasons: Object.entries(log.reduce((m: Record<string, { reason: string; vote: number; count: number }>, r) => {
+      for (const x of r.feedback_reasons ?? []) { const k = r.feedback + x; m[k] = m[k] ?? { reason: x, vote: r.feedback ?? 0, count: 0 }; m[k].count++; }
+      return m;
+    }, {})).map(([, v]) => v).sort((a, b) => b.count - a.count),
     caught: log.filter((r) => r.unverified?.length).slice(0, 20).map(({ created_at, question, unverified, status }) => ({ created_at, question, unverified, status })),
     recent: log.slice(0, 40).map(({ created_at, question, status, feedback, total_ms, has_jd }) => ({ created_at, question, status, feedback, total_ms, has_jd })),
   });

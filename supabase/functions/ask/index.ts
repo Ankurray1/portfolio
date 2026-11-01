@@ -11,7 +11,7 @@
 //   status "retrieval_only"  sources found, but the LLM is unavailable
 //   status "policy"          salary / notice-period questions get a fixed pointer to email
 //   status "rate_limited" | "invalid" | "error"
-// POST {"feedback": {"id", "vote": 1 | -1}} → { ok }  (thumbs up / down on an answer)
+// POST {"feedback": {"id", "vote": 1 | -1, "reasons"?: string[], "note"?: string}} → { ok }  (thumbs up / down, then why)
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -35,6 +35,9 @@ const PER_PAGE = 2;    // at most this many chunks from one page, so answers can
 const MODEL = 'gpt-4.1-mini'; // follows the cite-only and exact-figures rules more reliably than gpt-4o-mini
 const CONTACT = 'john.ankur.ray@gmail.com';
 const SPLIT = '<<<'; // the model puts its follow-up questions after this marker
+// the reason chips the site shows after a thumbs up or down (keep in step with AK_FB in index.html)
+const FEEDBACK_REASONS = new Set(['Answered my question', 'Clear and quick', 'Useful numbers', 'Good sources',
+  "Didn't answer my question", 'Not accurate', 'Too vague', 'Too long', 'Missing information']);
 
 const model = new Supabase.ai.Session('gte-small');
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
@@ -128,7 +131,13 @@ Deno.serve(async (req) => {
   if (body.feedback) {
     const id = String(body.feedback.id ?? ''), vote = Number(body.feedback.vote);
     if (!/^[0-9a-f-]{36}$/.test(id) || (vote !== 1 && vote !== -1)) return reply({ ok: false }, 400);
-    await db.from('ask_log').update({ feedback: vote }).eq('id', id);
+    // the reasons come from a fixed list; the optional note is the visitor's own words, capped at 500 characters
+    const reasons = (Array.isArray(body.feedback.reasons) ? body.feedback.reasons : []).map(String).filter((r: string) => FEEDBACK_REASONS.has(r)).slice(0, 6);
+    const note = String(body.feedback.note ?? '').replace(/\s+/g, ' ').trim().slice(0, 500);
+    const row: Record<string, unknown> = { feedback: vote, feedback_at: new Date().toISOString() };
+    if (reasons.length) row.feedback_reasons = reasons;
+    if (note) row.feedback_note = note;
+    await db.from('ask_log').update(row).eq('id', id);
     return reply({ ok: true });
   }
 

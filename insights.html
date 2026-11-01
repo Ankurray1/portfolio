@@ -71,6 +71,11 @@ th.n{text-align:right}
 .feed .meta{font:500 11px/1 var(--mono);color:var(--muted);margin-bottom:6px}
 .feed p{margin:4px 0 0;white-space:pre-wrap;font-size:13px;color:var(--muted)}
 .empty{color:var(--muted);font-size:13px;padding:8px 0}
+.reasons{margin:-4px 0 12px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.feed blockquote{margin:8px 0 0;padding:6px 0 6px 10px;border-left:3px solid #7B6BB0;font-size:13px}
+.feed details{margin-top:8px}.feed summary{cursor:pointer;font-size:12px;color:var(--muted)}
+.reasons .outcome{grid-template-columns:minmax(0,190px) minmax(0,1fr) 28px}
 .gate{max-width:420px;margin:12vh auto 0}
 .gate form{display:grid;gap:10px;margin-top:14px}
 .gate input{font:inherit;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
@@ -111,7 +116,7 @@ th.n{text-align:right}
 
     <section class="grid two">
       <div class="card"><h2>Most asked</h2><table id="top"></table></div>
-      <div class="card"><h2>Thumbs down<small>answers to improve</small></h2><div class="feed" id="disliked"></div></div>
+      <div class="card"><h2>Feedback<small>votes, reasons and notes</small></h2><div id="reasons"></div><div class="feed" id="feedback"></div></div>
     </section>
 
     <section class="grid two">
@@ -163,7 +168,12 @@ function render(j){
   const total=Object.values(j.outcomes).reduce((a,b)=>a+b,0);
   $('#outcomes').innerHTML=total?Object.entries(j.outcomes).sort((a,b)=>b[1]-a[1]).map(([k,v])=>'<div class="outcome"><span>'+esc(out(k)[0])+'</span><span class="track"><span class="fill" style="display:block;width:'+Math.max(3,v/total*100)+'%;background:'+out(k)[1]+'"></span></span><span class="v">'+v+'</span></div>').join(''):'<p class="empty">No questions yet in this range.</p>';
   $('#top').innerHTML=j.top_questions.length?'<tr><th>Question</th><th class="n">Asked</th><th class="n">Answered</th></tr>'+j.top_questions.map(t=>'<tr><td class="q">'+esc(t.question)+'</td><td class="n">'+t.count+'</td><td class="n">'+t.answered+'</td></tr>').join(''):'<tr><td class="empty">No questions yet.</td></tr>';
-  $('#disliked').innerHTML=j.disliked.length?j.disliked.map(d=>'<article><div class="meta">'+esc(when(d.created_at))+'</div><b>'+esc(d.question)+'</b><p>'+esc(d.answer||'')+'</p></article>').join(''):'<p class="empty">No thumbs down in this range. Answers that get one appear here with the full text.</p>';
+  const rmax=Math.max(1,...j.reasons.map(r=>r.count));
+  $('#reasons').innerHTML=j.reasons.length?'<div class="reasons">'+j.reasons.map(r=>'<div class="outcome"><span>'+(r.vote===1?'👍 ':'👎 ')+esc(r.reason)+'</span><span class="track"><span class="fill" style="display:block;width:'+Math.max(4,r.count/rmax*100)+'%;background:'+(r.vote===1?'var(--good)':'var(--crit)')+'"></span></span><span class="v">'+r.count+'</span></div>').join('')+'</div>':'';
+  $('#feedback').innerHTML=j.feedback.length?j.feedback.map(f=>'<article><div class="meta">'+(f.vote===1?'👍 Helpful':'👎 Not helpful')+' · '+esc(when(f.created_at))+'</div><b>'+esc(f.question)+'</b>'+
+    (f.reasons.length?'<div class="chips">'+f.reasons.map(r=>'<span class="pill">'+esc(r)+'</span>').join('')+'</div>':'')+
+    (f.note?'<blockquote>“'+esc(f.note)+'”</blockquote>':'')+
+    (f.answer?'<details><summary>Answer they saw</summary><p>'+esc(f.answer)+'</p></details>':'')+'</article>').join(''):'<p class="empty">No votes yet in this range. When visitors rate an answer, their reasons and notes appear here.</p>';
   $('#caught').innerHTML=j.caught.length?j.caught.map(c=>'<article><div class="meta">'+esc(when(c.created_at))+' · '+(c.status==='answered'?'line removed, answer kept':'answer held back')+'</div><b>'+esc(c.question)+'</b><p>Figure not in any source: '+esc((c.unverified||[]).join(', '))+'</p></article>').join(''):'<p class="empty">Nothing caught in this range.</p>';
   $('#recent').innerHTML=j.recent.length?'<tr><th>When</th><th>Question</th><th>Outcome</th><th class="n">Time</th></tr>'+j.recent.map(r=>'<tr><td style="white-space:nowrap;color:var(--muted)">'+esc(when(r.created_at))+'</td><td class="q">'+esc(r.question)+(r.has_jd?' <span class="pill">job description</span>':'')+(r.feedback===1?' 👍':r.feedback===-1?' 👎':'')+'</td><td>'+pill(r.status)+'</td><td class="n">'+secs(r.total_ms)+'</td></tr>').join(''):'<tr><td class="empty">No questions yet.</td></tr>';
 }
