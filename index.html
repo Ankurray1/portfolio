@@ -1305,6 +1305,267 @@ footer.foot .chip{margin-left:auto}
 .cv-chip svg{width:14px;height:14px;flex:none;color:var(--muted)}
 .cv-chip:hover{background:var(--sunk);border-color:color-mix(in srgb,var(--ink) 18%,var(--line))}
 .cv-chip:focus-visible{outline:2px solid #4A93B2;outline-offset:2px}
+
+/* ---------- Ask Ankur: launcher, hello, side panel (a sheet on phones) ---------- */
+@property --ak-a{syntax:"<angle>";inherits:false;initial-value:0deg}
+.ak-launch{position:fixed;right:20px;bottom:20px;z-index:60;display:inline-flex;align-items:center;gap:10px;height:50px;padding:0 10px 0 7px;border:1px solid var(--line);border-radius:999px;background:color-mix(in srgb,var(--surface) 90%,transparent);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);color:var(--ink);font:600 14px/1 var(--display);letter-spacing:-.01em;cursor:pointer;box-shadow:0 1px 2px rgba(16,24,40,.06),0 14px 32px -14px rgba(20,30,60,.38);transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,opacity .2s;animation:ak-rise .7s cubic-bezier(.2,.8,.2,1) .5s both}
+.ak-launch:hover{transform:translateY(-2px);box-shadow:0 2px 4px rgba(16,24,40,.06),0 20px 40px -14px rgba(60,50,120,.45)}
+.ak-launch:active{transform:scale(.97);transition-duration:.1s}
+.ak-launch:focus-visible{outline:2px solid #4A93B2;outline-offset:3px}
+.ak-launch kbd{font:500 10.5px/1 var(--mono);color:var(--muted);padding:5px 6px;border-radius:7px;border:1px solid var(--line);background:var(--sunk)}
+.ak-orb{position:relative;flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;color:#fff;background:conic-gradient(from var(--ak-a),#4A93B2,#7B6BB0,#C9667A,#4A93B2);animation:ak-orb 6s linear infinite}
+.ak-orb svg{width:18px;height:18px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}
+.ak-orb:after{content:"";position:absolute;inset:-3px;border-radius:50%;border:1.5px solid color-mix(in srgb,#7B6BB0 50%,transparent);animation:ak-ping 2.8s ease-out infinite}
+@keyframes ak-orb{to{--ak-a:360deg}}
+@keyframes ak-ping{0%{transform:scale(.92);opacity:.9}70%,100%{transform:scale(1.32);opacity:0}}
+@keyframes ak-rise{from{opacity:0;transform:translateY(16px) scale(.94)}}
+.ak-hello{position:fixed;right:20px;bottom:82px;z-index:60;width:min(290px,calc(100vw - 40px));transform-origin:100% 100%;animation:ak-pop .5s cubic-bezier(.2,.8,.2,1) both}
+.ak-hello[hidden]{display:none}
+.ak-hello-body{all:unset;box-sizing:border-box;display:block;width:100%;padding:14px 38px 14px 16px;border-radius:18px 18px 6px 18px;background:var(--surface);color:var(--ink);font:400 14px/1.45 var(--display);cursor:pointer;box-shadow:0 1px 2px rgba(16,24,40,.06),0 20px 44px -18px rgba(20,30,60,.4),inset 0 0 0 1px var(--line)}
+.ak-hello-body b{font-weight:600}
+.ak-hello-x{all:unset;position:absolute;top:8px;right:8px;width:26px;height:26px;display:grid;place-items:center;border-radius:50%;color:var(--muted);cursor:pointer}
+.ak-hello-x svg{width:14px;height:14px}
+.ak-hello-x:hover{background:var(--sunk);color:var(--ink)}
+@keyframes ak-pop{from{opacity:0;transform:translateY(8px) scale(.96)}}
+.ak-on .ak-launch,.ak-on .ak-hello{opacity:0;transform:scale(.92);pointer-events:none;animation:none}
+.ak-veil{position:fixed;inset:0;z-index:70;background:rgba(14,18,30,.2);opacity:0;transition:opacity .35s ease}
+.ak-veil[hidden]{display:none}
+.ak-on .ak-veil{opacity:1}
+.ak{position:fixed;z-index:71;top:12px;right:12px;bottom:12px;width:min(440px,calc(100vw - 24px));display:flex;flex-direction:column;border-radius:22px;background:var(--surface);color:var(--ink);font-family:var(--display);box-shadow:0 0 0 1px var(--line),0 32px 80px -24px rgba(15,20,40,.5);overflow:hidden;opacity:0;transform:translateX(32px) scale(.985);transform-origin:100% 50%;transition:opacity .25s ease,transform .45s cubic-bezier(.2,.85,.2,1)}
+.ak[hidden]{display:none}
+.ak-on .ak{opacity:1;transform:none}
+.ak-head{display:flex;align-items:center;gap:12px;padding:14px 10px 14px 16px;border-bottom:1px solid var(--line)}
+.ak-av{position:relative;flex:none;width:38px;height:38px;border-radius:50%;background:var(--headshot,none) center/cover,linear-gradient(135deg,#4A93B2,#7B6BB0)}
+.ak-av i{position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;background:#22A06B;border:2px solid var(--surface)}
+.ak-id{flex:1;min-width:0}
+.ak-id h2{margin:0;display:flex;align-items:center;gap:7px;font:600 15px/1.2 var(--display);letter-spacing:-.01em}
+.ak-tag{font:600 9.5px/1 var(--mono);letter-spacing:.06em;padding:3px 5px;border-radius:5px;color:#5B4FA0;background:color-mix(in srgb,#7B6BB0 14%,var(--surface))}
+.ak-id p{margin:3px 0 0;font-size:12.5px;line-height:1.2;color:var(--muted)}
+.ak-icon{all:unset;box-sizing:border-box;flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:10px;color:var(--muted);cursor:pointer;transition:background-color .15s,color .15s}
+.ak-icon:hover{background:var(--sunk);color:var(--ink)}
+.ak-icon:focus-visible,.ak-sugg button:focus-visible,.ak-fu button:focus-visible,.ak-refs a:focus-visible,.ak-retry:focus-visible,.ak-send:focus-visible{outline:2px solid #4A93B2;outline-offset:2px}
+.ak-icon svg{width:18px;height:18px}
+.ak-log{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:20px 18px 12px;display:flex;flex-direction:column;gap:16px}
+.ak-empty{display:grid;gap:8px;margin-top:auto}
+.ak-hi{margin:0;font:400 28px/1.12 var(--serif);letter-spacing:-.01em}
+.ak-sub{margin:0 0 10px;font-size:14px;line-height:1.5;color:var(--muted)}
+.ak-sugg{display:grid;gap:6px}
+.ak-sugg button{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:11px 12px 11px 14px;border-radius:12px;border:1px solid var(--line);font-size:14px;line-height:1.35;cursor:pointer;transition:background-color .15s,border-color .15s}
+.ak-sugg button>span{flex:1;min-width:0}
+.ak-sugg button>svg{flex:none;width:16px;height:16px;color:var(--muted);transition:transform .25s cubic-bezier(.2,.8,.2,1),color .15s}
+.ak-sugg button:hover{background:var(--sunk);border-color:color-mix(in srgb,var(--ink) 14%,var(--line))}
+.ak-sugg button:hover>svg:last-child{transform:translateX(3px);color:var(--ink)}
+.ak-sugg .ak-fit{border-style:dashed;margin-top:4px}
+.ak-fit b{display:block;font-weight:600}
+.ak-fit small{display:block;margin-top:2px;font-size:12px;color:var(--muted)}
+.ak-ques{align-self:flex-end;max-width:86%;padding:10px 14px;border-radius:16px 16px 5px 16px;background:var(--sunk);font-size:14px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;animation:ak-in .25s ease both}
+.ak-ques small{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;color:var(--muted)}
+.ak-ques small svg{width:14px;height:14px}
+.ak-ans{display:grid;gap:10px;font-size:14.5px;line-height:1.55;overflow-wrap:anywhere}
+.ak-ans p{margin:0}
+.ak-ans ul{margin:0;padding-left:18px;display:grid;gap:5px}
+.ak-ans b{font-weight:600}
+.ak-ans :is(p,li,td) a:not([class]){color:inherit;text-decoration:underline;text-underline-offset:2px}
+.ak-table{overflow-x:auto}
+.ak-ans table{border-collapse:collapse;font-size:13px;width:100%}
+.ak-ans th,.ak-ans td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+.ak-ans th{background:var(--sunk);font-weight:600}
+@keyframes ak-in{from{opacity:0;transform:translateY(6px)}}
+.ak-c{display:inline-grid;place-items:center;min-width:17px;height:17px;padding:0 4px;margin-left:3px;border-radius:5px;font:600 10px/1 var(--mono);color:#2F6F8A;background:color-mix(in srgb,#4A93B2 14%,var(--surface));text-decoration:none;vertical-align:2px;transition:background-color .15s,color .15s}
+.ak-c+.ak-c{margin-left:2px}
+.ak-c:hover{background:#4A93B2;color:#fff}
+.ak-caret{display:inline-block;width:7px;height:15px;margin-left:3px;border-radius:2px;background:linear-gradient(#4A93B2,#7B6BB0);vertical-align:-2px;animation:ak-blink .9s steps(2) infinite}
+@keyframes ak-blink{50%{opacity:0}}
+.ak-think{display:flex;align-items:center;gap:10px;font-size:14px;animation:ak-in .25s ease both}
+.ak-orb-s{width:22px;height:22px;animation-duration:2s}
+.ak-orb-s svg{width:12px;height:12px}
+.ak-orb-s:after{display:none}
+.ak-shimmer{background:linear-gradient(90deg,var(--muted) 0 35%,var(--ink) 50%,var(--muted) 65% 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:ak-shim 1.8s linear infinite}
+@keyframes ak-shim{from{background-position:100% 0}to{background-position:-60% 0}}
+.ak-refs{display:flex;flex-wrap:wrap;gap:6px;animation:ak-in .3s ease both}
+.ak-refs a{display:inline-flex;align-items:center;gap:7px;max-width:100%;padding:5px 11px 5px 5px;border-radius:999px;border:1px solid var(--line);font-size:12.5px;line-height:1.2;color:var(--ink);text-decoration:none;transition:background-color .15s,border-color .15s}
+.ak-refs a i{flex:none;display:grid;place-items:center;width:19px;height:19px;border-radius:50%;font:600 10px/1 var(--mono);font-style:normal;color:#2F6F8A;background:color-mix(in srgb,#4A93B2 14%,var(--surface))}
+.ak-refs a span{text-decoration:none;min-width:0;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ak-refs a:hover{background:var(--sunk);border-color:color-mix(in srgb,#4A93B2 40%,var(--line))}
+.ak-src-list{flex-direction:column;align-items:flex-start}
+.ak-acts{display:flex;align-items:center;gap:0;margin:-4px 0 0 -7px}
+.ak-acts .ak-icon{width:30px;height:30px;border-radius:8px}
+.ak-acts .ak-icon svg{width:16px;height:16px}
+.ak-acts .ak-icon.on{color:#2F6F8A;background:color-mix(in srgb,#4A93B2 13%,var(--surface))}
+.ak-acts small{margin-left:6px;font-size:12px;color:var(--muted)}
+.ak-fu{display:flex;flex-wrap:wrap;gap:6px;animation:ak-in .35s ease .05s both}
+.ak-fu button{all:unset;box-sizing:border-box;max-width:100%;padding:7px 12px;border-radius:999px;font-size:13px;line-height:1.3;cursor:pointer;color:color-mix(in srgb,#7B6BB0 55%,var(--ink));background:color-mix(in srgb,#7B6BB0 7%,var(--surface));border:1px solid color-mix(in srgb,#7B6BB0 24%,var(--line));transition:background-color .15s}
+.ak-fu button:hover{background:color-mix(in srgb,#7B6BB0 14%,var(--surface))}
+.ak-fu .ak-cta{display:inline-flex;align-items:center;gap:6px;color:#145238;background:color-mix(in srgb,#145238 7%,var(--surface));border-color:color-mix(in srgb,#145238 22%,var(--line))}
+.ak-fu .ak-cta:hover{background:color-mix(in srgb,#145238 13%,var(--surface))}
+.ak-fu .ak-cta svg{width:14px;height:14px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ak-fu .ak-cta{color:#7CC4A0;background:color-mix(in srgb,#7CC4A0 10%,var(--surface));border-color:color-mix(in srgb,#7CC4A0 30%,var(--line))}}
+:root[data-theme="dark"] .ak-fu .ak-cta{color:#7CC4A0;background:color-mix(in srgb,#7CC4A0 10%,var(--surface));border-color:color-mix(in srgb,#7CC4A0 30%,var(--line))}
+.ak-note{color:var(--muted)}
+.ak-retry{all:unset;box-sizing:border-box;justify-self:start;display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);font-size:13px;cursor:pointer}
+.ak-retry:hover{background:var(--sunk)}
+.ak-retry svg{width:14px;height:14px}
+.ak-compose{padding:10px 12px 12px;border-top:1px solid var(--line);background:var(--surface)}
+.ak-file{display:flex;align-items:center;gap:10px;margin:0 0 8px;padding:8px 6px 8px 12px;border-radius:12px;background:var(--sunk);font-size:13px}
+.ak-file[hidden]{display:none}
+.ak-file>svg{flex:none;width:18px;height:18px;color:#7B6BB0}
+.ak-file span{flex:1;min-width:0}
+.ak-file b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ak-file small{display:block;font-size:12px;color:var(--muted)}
+.ak-file.bad{background:color-mix(in srgb,#D4405F 9%,var(--surface));color:#A12A44}
+.ak-box{display:flex;align-items:flex-end;gap:4px;padding:5px;border-radius:16px;border:1px solid var(--line);background:var(--bg);transition:border-color .2s,box-shadow .2s}
+.ak-box:focus-within{border-color:color-mix(in srgb,#4A93B2 55%,var(--line));box-shadow:0 0 0 4px color-mix(in srgb,#4A93B2 14%,transparent)}
+.ak-box textarea{flex:1;min-width:0;margin:0;border:0;outline:0;resize:none;background:transparent;color:var(--ink);font:400 15px/1.45 var(--display);padding:7px 2px;max-height:132px}
+.ak-box textarea::placeholder{color:var(--muted)}
+.ak-send{all:unset;box-sizing:border-box;flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:11px;color:var(--surface);background:var(--ink);cursor:pointer;transition:opacity .2s,transform .15s}
+.ak-send:not(:disabled):hover{transform:translateY(-1px)}
+.ak-send:disabled{opacity:.22;cursor:default}
+.ak-send svg{width:18px;height:18px}
+.ak-send.stop svg{width:16px;height:16px}
+.ak-fine{margin:8px 4px 0;font-size:11.5px;line-height:1.35;color:var(--muted);text-align:center}
+/* the banner on the product and founder pages opens the panel */
+button.ask.ai.ask-soon.ak-entry{font:inherit;color:inherit;text-align:left;cursor:pointer}
+button.ak-entry .ask-field>.ask-soon-copy{font:400 13px/1.35 var(--display);letter-spacing:0;text-transform:none}
+button.ak-entry .ask-field{display:flex;flex-direction:column;min-width:0;cursor:pointer}
+button.ak-entry .ask-soon-cta{cursor:pointer;color:#fff;background:linear-gradient(135deg,#2F6F8A,#5B4FA0);border-color:transparent;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s}
+button.ak-entry:hover .ask-soon-cta{transform:translateX(2px);box-shadow:0 8px 18px -10px #5B4FA0}
+button.ak-entry .ask-soon-cta kbd{font:500 9.5px/1 var(--mono);padding:3px 5px;border-radius:5px;background:rgba(255,255,255,.18)}
+button.ak-entry:focus-visible{outline:2px solid #4A93B2;outline-offset:3px}
+.ak-live{display:inline-flex;align-items:center;gap:5px;padding:3px 7px;border-radius:999px;font:500 9.5px/1 var(--mono);font-style:normal;letter-spacing:.05em;text-transform:uppercase;color:#1A7F55;background:color-mix(in srgb,#22A06B 12%,var(--surface))}
+.ak-live b{position:relative;width:6px;height:6px;border-radius:50%;background:#22A06B}
+.ask.ai.ask-soon .ak-live b:after,.ak-live b:after{content:"";position:absolute;inset:0;border-radius:50%;background:#22A06B;animation:ask-live 1.6s ease-out infinite!important}
+.m-founder .ak-entry .ask-soon-cta{background:linear-gradient(135deg,#B8402A,#E8622C)}
+@media (hover:none){.ak-launch kbd,button.ak-entry .ask-soon-cta kbd{display:none}}
+@media (max-width:640px){
+  .ak{top:auto;left:0;right:0;bottom:0;width:100%;height:calc(100dvh - 10px);border-radius:22px 22px 0 0;transform:translateY(48px);transform-origin:50% 100%}
+  .ak-on,.ak-on body{overflow:hidden}
+  .ak-launch{right:14px;bottom:14px;height:48px;padding-right:14px}
+  .ak-hello{right:14px;bottom:74px}
+  .ak-box textarea{font-size:16px}
+  .ak-hi{font-size:25px}
+  .ak-compose{padding-bottom:max(12px,env(safe-area-inset-bottom))}
+}
+@media (prefers-reduced-motion:reduce){.ak,.ak-veil,.ak-launch{transition:none;animation:none}.ak-orb,.ak-orb:after,.ak-shimmer,.ak-caret,.ak-hello,.ak-ans,.ak-ques,.ak-refs,.ak-fu,.ak-think{animation:none}}
+@media print{.ak-launch,.ak-hello,.ak,.ak-veil{display:none!important}}
+
+/* ---------- Ask Ankur, the living layer: flowing gradient light on everything the AI touches ---------- */
+html[data-mode="founder"] .ak-launch,html[data-mode="founder"] .ak-hello{display:none}
+/* launcher: a ring of light that circles the pill, a soft halo that breathes, and a sheen across the label */
+.ak-launch{isolation:isolate;padding:0 16px 0 7px;border:1.5px solid transparent;background:linear-gradient(color-mix(in srgb,var(--surface) 94%,transparent),color-mix(in srgb,var(--surface) 94%,transparent)) padding-box,conic-gradient(from var(--ak-a),#4A93B2,#7B6BB0,#C9667A,#E0A458,#4A93B2) border-box;animation:ak-rise .7s cubic-bezier(.2,.8,.2,1) .5s both,ak-orb 4s linear infinite}
+.ak-launch::before{content:"";position:absolute;inset:-5px;z-index:-1;border-radius:inherit;background:conic-gradient(from var(--ak-a),#4A93B2,#7B6BB0,#C9667A,#E0A458,#4A93B2);filter:blur(14px);opacity:.42;animation:ak-orb 4s linear infinite,ak-breathe 3.4s ease-in-out infinite}
+.ak-launch:hover::before{opacity:.75}
+@keyframes ak-breathe{50%{opacity:.7;transform:scale(1.05)}}
+.ak-launch-t{background:linear-gradient(100deg,var(--ink) 0 35%,#7B6BB0 45%,#4A93B2 52%,var(--ink) 62% 100%);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:ak-text 5s ease-in-out infinite}
+@keyframes ak-text{0%,45%{background-position:100% 0}85%,100%{background-position:0 0}}
+/* the orb: a slowly turning, softly morphing drop of light */
+.ak-orb{overflow:visible;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.6),transparent 45%),conic-gradient(from var(--ak-a),#4A93B2,#7B6BB0,#C9667A,#E0A458,#4A93B2);box-shadow:0 0 18px -3px color-mix(in srgb,#7B6BB0 75%,transparent),inset 0 0 8px rgba(255,255,255,.35);animation:ak-orb 5s linear infinite,ak-morph 8s ease-in-out infinite}
+.ak-orb>i{position:absolute;inset:16%;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.55),transparent 70%);filter:blur(3px);animation:ak-core 3.2s ease-in-out infinite}
+.ak-orb svg{position:relative}
+@keyframes ak-morph{0%,100%{border-radius:50%}25%{border-radius:58% 42% 52% 48%/46% 56% 44% 54%}50%{border-radius:44% 56% 46% 54%/56% 44% 56% 44%}75%{border-radius:52% 48% 58% 42%/48% 52% 48% 52%}}
+@keyframes ak-core{50%{transform:scale(1.25) translate(9%,-7%);opacity:.55}}
+.ak-orb-xl{width:58px;height:58px;margin:0 0 10px}
+.ak-orb-xl svg{width:26px;height:26px}
+.ak-orb-xl:after{inset:-7px}
+/* panel: a hairline of light across the top and drifting colour behind the header */
+.ak{box-shadow:0 0 0 1px color-mix(in srgb,#7B6BB0 24%,var(--line)),0 32px 80px -24px rgba(15,20,40,.5),0 0 90px -34px color-mix(in srgb,#7B6BB0 70%,transparent)}
+.ak::after{content:"";position:absolute;left:0;right:0;top:0;height:2px;z-index:3;background:linear-gradient(90deg,transparent,#4A93B2,#7B6BB0,#C9667A,transparent);background-size:200% 100%;animation:ak-sweep 4.5s linear infinite;opacity:.85}
+@keyframes ak-sweep{from{background-position:200% 0}to{background-position:-200% 0}}
+.ak-aura{position:absolute;inset:0 0 auto;height:300px;z-index:0;pointer-events:none;overflow:hidden;opacity:.5;-webkit-mask:linear-gradient(#000 25%,transparent);mask:linear-gradient(#000 25%,transparent)}
+.ak-aura i{position:absolute;width:230px;height:230px;border-radius:50%;filter:blur(54px)}
+.ak-aura i:nth-child(1){background:#4A93B2;left:-50px;top:-90px;animation:ak-drift1 14s ease-in-out infinite alternate}
+.ak-aura i:nth-child(2){background:#7B6BB0;right:-70px;top:-70px;animation:ak-drift2 17s ease-in-out infinite alternate}
+.ak-aura i:nth-child(3){background:#C9667A;left:35%;top:-140px;opacity:.6;animation:ak-drift3 21s ease-in-out infinite alternate}
+@keyframes ak-drift1{to{transform:translate(130px,50px) scale(1.2)}}
+@keyframes ak-drift2{to{transform:translate(-120px,60px) scale(.9)}}
+@keyframes ak-drift3{to{transform:translate(-70px,80px) scale(1.3)}}
+.ak-head,.ak-log,.ak-compose{position:relative;z-index:1}
+.ak-head{border-bottom-color:color-mix(in srgb,var(--line) 60%,transparent)}
+.ak-compose{background:color-mix(in srgb,var(--surface) 90%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+/* empty state */
+.ak-empty{justify-items:start}
+.ak-sugg-h,.ak-sec h4{margin:0;display:flex;align-items:center;gap:7px;font:600 10px/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.ak-sugg-h:before,.ak-sec h4:before{content:"";width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#4A93B2,#7B6BB0);box-shadow:0 0 8px #7B6BB0}
+.ak-sugg-h{margin:2px 0 4px}
+.ak-sugg{width:100%}
+.ak-sugg button{background:color-mix(in srgb,var(--surface) 82%,transparent);animation:ak-in .45s cubic-bezier(.2,.8,.2,1) both;transition:background-color .2s,border-color .2s,box-shadow .25s,transform .25s cubic-bezier(.2,.8,.2,1)}
+.ak-sugg button:nth-child(2){animation-delay:.05s}.ak-sugg button:nth-child(3){animation-delay:.1s}.ak-sugg button:nth-child(4){animation-delay:.15s}.ak-sugg button:nth-child(5){animation-delay:.2s}
+.ak-sugg button:hover{transform:translateY(-1px);background:color-mix(in srgb,#7B6BB0 5%,var(--surface));border-color:color-mix(in srgb,#7B6BB0 42%,var(--line));box-shadow:0 8px 22px -14px color-mix(in srgb,#7B6BB0 75%,transparent)}
+.ak-sugg button:hover>svg:last-child{color:#7B6BB0}
+/* answer card: a gradient edge that flows while the answer is being written, then settles */
+.ak-card{position:relative;display:grid;gap:12px;padding:14px 16px;border-radius:16px;border:1px solid transparent;background:linear-gradient(var(--surface),var(--surface)) padding-box,linear-gradient(135deg,color-mix(in srgb,#4A93B2 40%,var(--line)),var(--line) 38%,var(--line) 62%,color-mix(in srgb,#7B6BB0 40%,var(--line))) border-box;box-shadow:0 1px 2px rgba(16,24,40,.04),0 12px 30px -20px color-mix(in srgb,#7B6BB0 60%,transparent);animation:ak-in .3s ease both}
+.ak-card.live{background:linear-gradient(var(--surface),var(--surface)) padding-box,conic-gradient(from var(--ak-a),#4A93B2,#7B6BB0,#C9667A,#E0A458,#4A93B2) border-box;animation:ak-orb 2.4s linear infinite;box-shadow:0 0 0 4px color-mix(in srgb,#7B6BB0 7%,transparent),0 14px 36px -18px color-mix(in srgb,#7B6BB0 80%,transparent)}
+.ak-sum p{margin:0;font-size:15.5px;line-height:1.5;font-weight:500;letter-spacing:-.005em}
+.ak-sec{display:grid;gap:9px;padding-top:12px;border-top:1px dashed var(--line);animation:ak-in .35s ease both}
+.ak-card>.ak-sec:first-child{padding-top:0;border-top:0}
+.ak-sec ul{list-style:none;padding:0;gap:8px}
+.ak-sec li{position:relative;padding-left:17px}
+.ak-sec li:before{content:"";position:absolute;left:2px;top:.6em;width:6px;height:6px;border-radius:2px;transform:rotate(45deg);background:linear-gradient(135deg,#4A93B2,#7B6BB0)}
+.ak-rel{border-top:0;padding-top:0}
+.ak-wait{gap:14px}
+.ak-skel{display:grid;gap:8px}
+.ak-skel i{height:9px;border-radius:6px;background:linear-gradient(90deg,var(--sunk) 0 30%,color-mix(in srgb,#7B6BB0 22%,var(--sunk)) 50%,var(--sunk) 70% 100%);background-size:300% 100%;animation:ak-shim 1.6s linear infinite}
+.ak-skel i:nth-child(2){width:88%;animation-delay:.12s}.ak-skel i:nth-child(3){width:64%;animation-delay:.24s}
+/* composer: the field lights up with the same flowing ring while you type */
+.ak-box{border:1.5px solid transparent;background:linear-gradient(var(--bg),var(--bg)) padding-box,linear-gradient(var(--line),var(--line)) border-box}
+.ak-box:focus-within{background:linear-gradient(var(--bg),var(--bg)) padding-box,conic-gradient(from var(--ak-a),#4A93B2,#7B6BB0,#C9667A,#E0A458,#4A93B2) border-box;animation:ak-orb 4s linear infinite;box-shadow:0 0 0 4px color-mix(in srgb,#7B6BB0 9%,transparent),0 10px 28px -16px color-mix(in srgb,#7B6BB0 70%,transparent)}
+.ak-send:not(:disabled){color:#fff;background:linear-gradient(135deg,#4A93B2,#7B6BB0 60%,#C9667A);background-size:160% 160%;box-shadow:0 6px 16px -8px #7B6BB0;animation:ak-pan 4s ease-in-out infinite alternate}
+@keyframes ak-pan{to{background-position:100% 100%}}
+@media (prefers-reduced-motion:reduce){.ak-launch,.ak-launch::before,.ak-launch-t,.ak-orb>i,.ak::after,.ak-aura i,.ak-sugg button,.ak-card,.ak-card.live,.ak-sec,.ak-skel i,.ak-box:focus-within,.ak-send:not(:disabled){animation:none}}
+
+/* the visual block under each answer: stat tiles, tables and fit pills */
+.ak-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px}
+.ak-stat{position:relative;display:grid;gap:4px;align-content:start;padding:12px 12px 11px;border-radius:12px;overflow:hidden;background:linear-gradient(160deg,color-mix(in srgb,#4A93B2 9%,var(--surface)),color-mix(in srgb,#7B6BB0 9%,var(--surface)));box-shadow:inset 0 0 0 1px color-mix(in srgb,#7B6BB0 18%,var(--line));animation:ak-in .45s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*.08s)}
+.ak-stat:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.35) 50%,transparent 65%);background-size:250% 100%;animation:ak-shim 3.2s ease-in-out infinite;animation-delay:calc(var(--i,0)*.3s);pointer-events:none;mix-blend-mode:soft-light}
+.ak-stat b{font:600 22px/1.05 var(--display);letter-spacing:-.02em;background:linear-gradient(120deg,#2F6F8A,#5B4FA0 60%,#A04B63);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ak-stat span{font-size:12.5px;line-height:1.35;color:var(--muted)}
+.ak-stat .ak-c{vertical-align:0}
+.ak-table{border-radius:10px;box-shadow:inset 0 0 0 1px var(--line)}
+.ak-ans table{border-collapse:separate;border-spacing:0}
+.ak-ans th,.ak-ans td{border:0;border-bottom:1px solid var(--line);padding:8px 10px}
+.ak-ans tr:last-child td{border-bottom:0}
+.ak-ans th{font:600 10px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:color-mix(in srgb,#7B6BB0 6%,var(--surface))}
+.ak-ans tr{animation:ak-in .35s ease both}
+.ak-fit-pill{display:inline-block;padding:3px 8px;border-radius:999px;font:600 11px/1.2 var(--display);white-space:nowrap}
+.ak-fit-pill.strong{color:#14663F;background:color-mix(in srgb,#22A06B 15%,var(--surface))}
+.ak-fit-pill.partial{color:#8A5A0B;background:color-mix(in srgb,#E0A458 20%,var(--surface))}
+.ak-fit-pill.gap{color:#A12A44;background:color-mix(in srgb,#D4405F 13%,var(--surface))}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ak-stat b{background-image:linear-gradient(120deg,#8CCBE6,#B4A8F0 60%,#F0A0B4)}:root:not([data-theme="light"]) .ak-fit-pill.strong{color:#7CD9A8}:root:not([data-theme="light"]) .ak-fit-pill.partial{color:#F2C47E}:root:not([data-theme="light"]) .ak-fit-pill.gap{color:#F59AAE}}
+:root[data-theme="dark"] .ak-stat b{background-image:linear-gradient(120deg,#8CCBE6,#B4A8F0 60%,#F0A0B4)}
+@media (prefers-reduced-motion:reduce){.ak-stat,.ak-stat:after,.ak-ans tr{animation:none}}
+
+/* Ask Ankur mark: the photo sits in a ring of silky colour that turns, morphs and breathes; a spark marks it as AI */
+.ak-face{--s:36px;position:relative;flex:none;display:inline-grid;place-items:center;width:var(--s);height:var(--s);isolation:isolate}
+.ak-mesh{position:absolute;inset:-4.5px;z-index:-1;border-radius:50%;background:conic-gradient(from var(--ak-a),#4A93B2,#7B6BB0,#C9667A,#E0A458,#5FB3DA,#4A93B2);animation:ak-orb 3.6s linear infinite,ak-morph 7s ease-in-out infinite}
+.ak-mesh:before{content:"";position:absolute;inset:-5px;border-radius:inherit;background:conic-gradient(from var(--ak-a),#4A93B2,#7B6BB0,#C9667A,#E0A458,#5FB3DA,#4A93B2);filter:blur(10px);opacity:.7;animation:ak-orb 3.6s linear infinite,ak-breathe 3.2s ease-in-out infinite}
+.ak-mesh:after{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 28% 22%,rgba(255,255,255,.8),transparent 38%),radial-gradient(circle at 75% 80%,rgba(255,255,255,.4),transparent 42%);mix-blend-mode:soft-light;animation:ak-silk 5s linear infinite reverse}
+@keyframes ak-silk{to{transform:rotate(360deg)}}
+.ak-photo{width:100%;height:100%;border-radius:50%;background:var(--headshot) center 22%/cover,var(--sunk);box-shadow:0 0 0 2px var(--surface),inset 0 0 0 1px rgba(0,0,0,.06)}
+.ak-spark{position:absolute;right:-4px;bottom:-4px;display:grid;place-items:center;width:calc(var(--s)*.42);height:calc(var(--s)*.42);min-width:15px;min-height:15px;border-radius:50%;color:#fff;background:linear-gradient(135deg,#4A93B2,#7B6BB0 55%,#C9667A);box-shadow:0 0 0 2px var(--surface),0 2px 8px -1px #7B6BB0}
+.ak-spark svg{width:62%;height:62%;animation:ak-twinkle 2.6s ease-in-out infinite}
+@keyframes ak-twinkle{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(.8) rotate(25deg);opacity:.85}}
+.ak-face-lg{--s:44px}.ak-face-head{--s:38px}.ak-face-xl{--s:64px;margin:4px 0 12px 4px}.ak-face-s{--s:24px}
+.ak-face-xl .ak-mesh{inset:-6px}.ak-face-lg .ak-mesh{inset:-5px}.ak-face-s .ak-mesh{inset:-3px}
+.ak-face-s .ak-spark{display:none}
+.ak-face.think .ak-mesh,.ak-face.think .ak-mesh:before{animation-duration:1.1s,3s}
+.ak-launch:hover .ak-mesh,.ak-launch:hover .ak-mesh:before,.ak-entry:hover .ak-mesh,.ak-entry:hover .ak-mesh:before{animation-duration:1.4s,3s}
+.ak-launch{padding-left:8px;gap:11px}
+/* the product-page banner, in the panel's language: a flowing gradient edge, colour that follows the pointer, a silk sheen */
+button.ask.ai.ask-soon.ak-entry{position:relative;isolation:isolate;gap:14px;padding:10px 10px 10px 13px;border:1.5px solid transparent;border-radius:999px;background:linear-gradient(color-mix(in srgb,var(--surface) 90%,transparent),color-mix(in srgb,var(--surface) 90%,transparent)) padding-box,conic-gradient(from var(--ak-a),#4A93B2,#7B6BB0,#C9667A,#E0A458,#4A93B2) border-box!important;box-shadow:0 0 0 4px color-mix(in srgb,#7B6BB0 7%,transparent),0 18px 44px -24px color-mix(in srgb,#7B6BB0 85%,transparent)!important;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);animation:ak-orb 6s linear infinite!important}
+button.ask.ai.ask-soon.ak-entry:before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;filter:none;opacity:1;background:radial-gradient(170px circle at var(--mx,10%) var(--my,50%),color-mix(in srgb,#7B6BB0 24%,transparent),transparent 70%),radial-gradient(240px circle at calc(var(--mx,10%) + 150px) calc(var(--my,50%) - 10px),color-mix(in srgb,#4A93B2 18%,transparent),transparent 70%),radial-gradient(200px circle at calc(var(--mx,10%) + 320px) var(--my,50%),color-mix(in srgb,#C9667A 13%,transparent),transparent 70%);animation:ak-meshdrift 9s ease-in-out infinite alternate!important}
+@keyframes ak-meshdrift{to{background-position:70px 0,-50px 0,40px 0}}
+button.ask.ai.ask-soon.ak-entry:after{content:"";position:absolute;inset:0;z-index:-1;border:0;border-radius:inherit;-webkit-mask:none;mask:none;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.6) 50%,transparent 60%);background-size:260% 100%;mix-blend-mode:soft-light;animation:ak-shim 4.5s ease-in-out infinite!important}
+.ask.ai.ask-soon.ak-entry .ak-mesh{animation:ak-orb 3.6s linear infinite,ak-morph 7s ease-in-out infinite!important}
+.ask.ai.ask-soon.ak-entry .ak-mesh:before{animation:ak-orb 3.6s linear infinite,ak-breathe 3.2s ease-in-out infinite!important}
+.ask.ai.ask-soon.ak-entry .ak-mesh:after{animation:ak-silk 5s linear infinite reverse!important}
+.ask.ai.ask-soon.ak-entry .ak-spark svg{animation:ak-twinkle 2.6s ease-in-out infinite!important}
+.ask.ai.ask-soon.ak-entry:hover .ak-mesh,.ask.ai.ask-soon.ak-entry:hover .ak-mesh:before{animation-duration:1.4s,3s!important}
+button.ak-entry .ask-soon-title{gap:8px}
+button.ak-entry .ask-soon-cta{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 18px;border:0;border-radius:999px;font:600 13.5px/1 var(--display);letter-spacing:-.005em;text-transform:none;color:#fff;background:linear-gradient(120deg,#4A93B2,#7B6BB0 55%,#C9667A);background-size:180% 180%;box-shadow:0 10px 22px -12px #7B6BB0,inset 0 1px 0 rgba(255,255,255,.28);animation:ak-pan 5s ease-in-out infinite alternate!important}
+button.ak-entry .ask-soon-cta svg{width:16px;height:16px;transition:transform .3s cubic-bezier(.2,.8,.2,1)!important}
+button.ak-entry:hover .ask-soon-cta svg{transform:translateX(3px)}
+.m-founder button.ak-entry .ask-soon-cta{background:linear-gradient(120deg,#4A93B2,#7B6BB0 55%,#C9667A)}
+@media (max-width:560px){button.ak-entry .ask-soon-cta{width:40px;height:40px;padding:0;justify-content:center}button.ak-entry .ask-soon-cta>span{display:none}button.ask.ai.ask-soon.ak-entry{gap:10px}}
+@media (prefers-reduced-motion:reduce){.ak-mesh,.ak-mesh:before,.ak-mesh:after,.ak-spark svg,.ask.ai.ask-soon.ak-entry .ak-mesh,.ask.ai.ask-soon.ak-entry .ak-mesh:before,.ask.ai.ask-soon.ak-entry .ak-mesh:after,button.ask.ai.ask-soon.ak-entry,button.ask.ai.ask-soon.ak-entry:before,button.ask.ai.ask-soon.ak-entry:after,button.ak-entry .ask-soon-cta{animation:none!important}}
 </style><div id="root"><div id="view"></div><aside id="harness" hidden aria-label="Harness"></aside><dialog id="detail"></dialog><button id="hdot" hidden aria-label="Open harness" title="Harness"></button></div><style id="eval-dataset-style">
 /* Give the evaluation case study a four-cell feature footprint in the existing desktop bento. */
 @media(min-width:981px){.grid.bento{grid-template-columns:repeat(12,minmax(0,1fr));grid-template-areas:'a a a a a a a b b c c c' 'e e e e e e e b b c c c' 'g g g g f f f d d h h h';align-items:stretch}.grid.bento [data-slot=a] .photo{aspect-ratio:auto;min-height:240px}.grid.bento [data-slot=e] .photo{aspect-ratio:auto;min-height:270px;padding:18px;gap:8px}.grid.bento [data-slot=b] .photo,.grid.bento [data-slot=c] .photo{aspect-ratio:auto;min-height:380px}.grid.bento [data-slot=d] .photo,.grid.bento [data-slot=f] .photo{aspect-ratio:16/10}.grid.bento [data-slot=g] .photo{aspect-ratio:auto;min-height:180px}.grid.bento [data-slot=e] .cs-face .big{font-size:clamp(34px,3vw,48px)!important}.grid.bento [data-slot=e] h3{font-size:clamp(22px,2.2vw,30px);line-height:1.15}.grid.bento [data-slot=e] .sum{display:block;font-size:15px;line-height:1.55}.grid.bento [data-slot=e] .cf-label{font-size:15px}.grid.bento [data-slot=e] .cf-keys span{font-size:12px;padding:7px 10px}.grid.bento [data-slot=e] .cf-eval-viz{min-height:86px;gap:6px;padding:8px;margin-top:6px}}
@@ -1694,9 +1955,7 @@ function journey(key){
   const j=state[key], other=key==='pm'?'founder':'pm', fl=filters[key];
   const opts=(field,cur)=>['All',...new Set(j.items.map(i=>i[field]).filter(Boolean))].map(v=>'<option'+(v===cur?' selected':'')+'>'+esc(v)+'</option>').join('');
   const snaps=(PHOTOS[key]||[]).map((p,n)=>'<figure class="snap" style="--r:'+['-5deg','2deg','6deg'][n%3]+';--y:'+['8px','-4px','10px'][n%3]+'"><div class="photo" style="background:var(--'+p[0]+') center/cover"></div></figure>').join('');
-  const ask='<div class="ask ai ask-soon" role="group" aria-label="Ask Ankur AI, launching soon" aria-disabled="true"><span class="ask-mark" aria-hidden="true">'+SPARK+'</span>'+
-    '<div class="ask-field"><span class="ask-soon-title">Ask Ankur AI</span><span class="ask-soon-copy">A clearer way to explore my work, skills and projects.</span></div>'+
-    '<span class="ask-soon-cta" aria-hidden="true">Launching soon</span></div>';
+  const ask=key==='pm'?askEntry():'';
   return topBar('<nav><a class="chip back" href="#">← Home</a><a class="chip" href="#'+other+'">'+(other==='pm'?'Product career':'Founder journey')+' ↔</a></nav>')+
   '<main class="wrap"><section class="hero hero2">'+
     (snaps?'<div class="strip" aria-hidden="true">'+snaps+'</div>':'')+ask+
@@ -2020,10 +2279,7 @@ function pgInit(){
 const fsImg=(v,concept,cls)=>'<figure class="fs-img '+(cls||'')+'"><span style="background-image:var(--'+esc(v)+')"></span>'+(concept?'<figcaption>Visual concept</figcaption>':'')+'</figure>';
 function founderPage(){
   const j=state.founder, s=j.story, other='pm';
-  const ask='<div class="ask ai ask-soon" role="group" aria-label="Ask Ankur AI, launching soon" aria-disabled="true"><span class="ask-mark" aria-hidden="true">'+SPARK+'</span>'+
-    '<div class="ask-field"><span class="ask-soon-title">Ask Ankur AI</span><span class="ask-soon-copy">A clearer way to explore my work, skills and projects.</span></div>'+
-    '<span class="ask-soon-cta" aria-hidden="true">Launching soon</span></div>';
-  const hero='<section class="hero hero2 fs-hero">'+ask+'<p class="eyebrow">'+esc(s.eyebrow)+'</p><h1>'+esc(s.h1)+' <em>'+esc(s.h1em)+'</em></h1><p class="lede">'+esc(s.lede)+'</p>'+
+  const hero='<section class="hero hero2 fs-hero">'+'<p class="eyebrow">'+esc(s.eyebrow)+'</p><h1>'+esc(s.h1)+' <em>'+esc(s.h1em)+'</em></h1><p class="lede">'+esc(s.lede)+'</p>'+
     '<div class="fs-meta">'+s.meta.map(m=>'<span>'+esc(m)+'</span>').join('')+'</div></section>';
   const wins='<section class="fs-wins" aria-label="Highlights">'+s.wins.map((w,n)=>{const m=/^([^\d]*)([\d.]+)(.*)$/.exec(w[0]);
     return '<article class="fs-win" style="--i:'+n+'"><b'+(m&&!/st|yr/.test(m[3])?' data-to="'+m[2]+'" data-pre="'+esc(m[1])+'" data-suf="'+esc(m[3])+'"':'')+'>'+esc(w[0])+'</b><small>'+esc(w[1])+'</small><h3>'+esc(w[2])+'</h3><p>'+esc(w[3])+'</p></article>'}).join('')+'</section>';
@@ -2689,65 +2945,6 @@ document.addEventListener('input',e=>{
   if(e.target.id==='f-cat'){filters[v].cat=e.target.value;results(v)}
   if(e.target.id==='f-stage'){filters[v].stage=e.target.value;results(v)}
 });
-/* Ask Ankur: suggested questions per page; answers come from the RAG backend (see askLive) */
-const ASK_SUGG={pm:['How did you launch the Copilot agent?','What is your approach to AI evals?','Which SaaS metrics have you moved?'],
-  founder:['What is NAI Productions?','Why did you start a creative studio?','How does film shape your product thinking?']};
-function askPanel(q){
-  if(!ASK_ENABLED)return;
-  const p=$('#ask-panel'); if(!p) return;
-  const v=route(), hs=liveHighlights().length;
-  const src='<div class="ask-src"><span>'+state.pm.items.filter(i=>!i.hidden).length+' case studies</span><span>'+state.founder.items.length+' venture'+(state.founder.items.length===1?'':'s')+'</span><span>'+hs+' highlights</span><span>profile</span></div>';
-  const head='<div class="ask-panel-head"><strong>Ask Ankur AI</strong><button type="button" class="ask-close" data-ask-close aria-label="Close Ask Ankur AI" title="Close">×</button></div>';
-  const content=q?'<div class="bubble q">'+esc(q)+'</div>':'<div class="ask-meta"><span>Try asking</span></div><div class="ask-sugg">'+(ASK_SUGG[v]||ASK_SUGG.pm).map(s=>'<button type="button" data-ask="'+esc(s)+'">'+esc(s)+'</button>').join('')+'</div><div class="ask-meta"><span>Answers come from</span>'+src+'</div>';
-  const file=askPdf?'<div class="ask-attachment"><span>PDF attached · '+esc(askPdf.name)+' · '+askPdf.pages+' pages</span><button type="button" data-ask-pdf-remove>Remove</button></div>':'';
-  const upload='<div class="ask-upload"><span><b>Longer job description?</b><small>Upload a PDF of up to 3 pages</small></span><button type="button" data-ask-pdf>'+(askPdf?'Replace PDF':'Upload PDF')+'</button></div>';
-  const notice=askNotice?'<div class="ask-notice" role="status">'+esc(askNotice)+'</div>':'';
-  p.innerHTML=head+content+file+upload+notice;
-  p.hidden=false;
-  askFocus(true);
-}
-const closeAsk=()=>{const p=$('#ask-panel');if(!document.documentElement.classList.contains('ask-on')){if(p)p.hidden=true;document.activeElement?.blur?.();return}askFocus(false);document.activeElement?.blur?.();setTimeout(()=>{if(!document.documentElement.classList.contains('ask-on')&&p)p.hidden=true},250)};
-let askOriginRect=null;
-function updateAskPanelPosition(){
-  const bar=$('#ask'),p=$('#ask-panel'); if(!bar||!p||!document.documentElement.classList.contains('ask-on'))return;
-  const top=Math.ceil(bar.getBoundingClientRect().bottom+10);
-  p.style.setProperty('--ask-panel-top',top+'px');
-  p.style.setProperty('--ask-panel-max','calc(100dvh - '+top+'px - 16px)');
-}
-/* Focus mode docks the input at the top, blurs the page and contains all conversation scrolling. */
-function askFocus(on){
-  if(on&&!ASK_ENABLED)return;
-  const root=document.documentElement,bar=$('#ask'),p=$('#ask-panel');
-  if(!bar)return;
-  const isOn=root.classList.contains('ask-on');
-  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(on&&!isOn){
-    askOriginRect=bar.getBoundingClientRect();
-    root.classList.remove('ask-closing');
-    root.classList.add('ask-on');
-    updateAskPanelPosition();
-    const to=bar.getBoundingClientRect(),from=askOriginRect;
-    if(!reduce&&bar.animate){
-      const sx=from.width/Math.max(1,to.width),sy=from.height/Math.max(1,to.height);
-      bar.animate([{transform:'translate('+(from.left-to.left)+'px,'+(from.top-to.top)+'px) scale('+sx+','+sy+')'},{transform:'translate(0,0) scale(1,1)'}],{duration:400,easing:'cubic-bezier(.2,.85,.25,1)'});
-      if(p&&!p.hidden)p.animate([{opacity:0,transform:'translateY(-8px) scale(.99)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:300,delay:45,easing:'cubic-bezier(.2,.75,.25,1)'});
-    }
-  }else if(!on&&isOn){
-    const from=bar.getBoundingClientRect(),origin=askOriginRect;
-    const panelOpen=p&&!p.hidden;
-    root.classList.add('ask-closing');
-    root.classList.remove('ask-on');
-    const to=bar.getBoundingClientRect();
-    if(origin&&!reduce&&bar.animate){
-      const sx=from.width/Math.max(1,to.width),sy=from.height/Math.max(1,to.height);
-      bar.animate([{transform:'translate('+(from.left-to.left)+'px,'+(from.top-to.top)+'px) scale('+sx+','+sy+')'},{transform:'translate(0,0) scale(1,1)'}],{duration:360,easing:'cubic-bezier(.35,0,.2,1)'});
-    }
-    if(panelOpen&&!reduce&&p?.animate)p.animate([{opacity:1,transform:'translateY(0) scale(1)'},{opacity:0,transform:'translateY(-8px) scale(.99)'}],{duration:220,easing:'cubic-bezier(.4,0,1,1)',fill:'both'});
-    setTimeout(()=>{if(!root.classList.contains('ask-on')){root.classList.remove('ask-closing');p?.style.removeProperty('--ask-panel-top');p?.style.removeProperty('--ask-panel-max')}},250);
-    askOriginRect=null;
-  }
-}
-addEventListener('hashchange',()=>askFocus(false));
 /* profile card → product page, with the silk sequence; buttons and links inside the card keep their own job */
 function openFromCard(card,x,y){
   if(card.classList.contains('opening')) return;
@@ -2770,98 +2967,263 @@ document.addEventListener('click',e=>{
   const r=(link||card).getBoundingClientRect();
   openFromCard(card,e.clientX||r.left+r.width/2,e.clientY||r.top+r.height/2);
 });
-/* rotate example questions through the empty Ask bar so it reads as a live assistant */
-let askTick=0;
-setInterval(()=>{
-  const q=$('#ask-q'); if(!q||q.value||document.activeElement===q||matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const s=ASK_SUGG[route()]||ASK_SUGG.pm; askTick=(askTick+1)%(s.length+1);
-  q.placeholder=askTick===0?'Ask about my work, skills or projects…':'Try: '+s[askTick-1];
-},3200);
 /* role tags: tap to open on touch screens, hover/focus elsewhere */
 document.addEventListener('click',e=>{
   const r=e.target.closest('[data-role]');
   document.querySelectorAll('.has-people.open').forEach(li=>{if(!r||li!==r.parentElement){li.classList.remove('open');li.querySelector('[data-role]').setAttribute('aria-expanded','false')}});
   if(r){const li=r.parentElement;const o=li.classList.toggle('open');r.setAttribute('aria-expanded',String(o))}
 });
-let askPdf=null,askNotice='';
-function askUpdateInput(){
-  const q=$('#ask-q'),counter=$('#ask-counter'),hint=$('#ask-hint'); if(!q)return;
-  const n=q.value.length;if(counter){counter.textContent=n.toLocaleString()+' / '+ASK_INPUT_MAX.toLocaleString();counter.classList.toggle('near-limit',n>=ASK_INPUT_MAX-100)}
-  if(hint){const text=askNotice||(n>=ASK_INPUT_MAX?'You’ve reached the 2,000-character limit. Upload a PDF job description (up to 3 pages) to include more.':'');hint.textContent=text;hint.hidden=!text}
+/* ---------- Ask Ankur: the site's AI assistant ----------
+   A launcher on every page opens a side panel (a full-height sheet on phones). Questions go to the RAG backend
+   (supabase/functions/ask), which answers only from this site, streams the reply and checks its figures against the sources. */
+const ASK_URL='https://zzkppvuedkkcdocmisje.supabase.co/functions/v1/ask', LIVE_SITE='https://ankurray1.github.io/portfolio/';
+const ASK_INPUT_MAX=2000,ASK_PDF_MAX_PAGES=3,ASK_PDF_TEXT_MAX=12000,ASK_TIMEOUT=30000,ASK_MAIL='john.ankur.ray@gmail.com';
+const ASK_SUGG=['Why is Ankur a fit for an AI PM role?','What impact did he deliver at Vantage Circle?','Walk me through the Copilot agent launch','How does he work with engineering and stakeholders?'];
+const AK_I=d=>'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+d+'</svg>';
+const AK={arrow:AK_I('<path d="M5 12h14M13 6l6 6-6 6"/>'),send:AK_I('<path d="M12 19V5M6 11l6-6 6 6"/>'),stop:AK_I('<rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor" stroke="none"/>'),
+  clip:AK_I('<path d="M20.5 11.5l-8.4 8.4a5 5 0 0 1-7.1-7.1l8.4-8.4a3.3 3.3 0 0 1 4.7 4.7l-8.4 8.4a1.7 1.7 0 0 1-2.4-2.4l7.7-7.7"/>'),
+  copy:AK_I('<rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M5 15V6.5A1.5 1.5 0 0 1 6.5 5H15"/>'),check:AK_I('<path d="M5 12.5l4.5 4.5L19 7.5"/>'),
+  up:AK_I('<path d="M7 10v10M7 10l4.2-6.4a1.9 1.9 0 0 1 3.4 1.4L14 9h4.8a2 2 0 0 1 2 2.4l-1.4 7a2 2 0 0 1-2 1.6H7"/>'),
+  down:AK_I('<path d="M17 14V4M17 14l-4.2 6.4a1.9 1.9 0 0 1-3.4-1.4L10 15H5.2a2 2 0 0 1-2-2.4l1.4-7a2 2 0 0 1 2-1.6H17"/>'),
+  fresh:AK_I('<path d="M4 12a8 8 0 1 0 2.4-5.7L4 8.6"/><path d="M4 4v4.6h4.6"/>'),close:AK_I('<path d="M6 6l12 12M18 6L6 18"/>'),
+  doc:AK_I('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>')};
+/* the Ask Ankur mark: Ankur's photo inside a ring of flowing colour, with a small AI spark */
+const akFace=cls=>'<span class="ak-face'+(cls?' '+cls:'')+'" aria-hidden="true"><span class="ak-mesh"></span><span class="ak-photo"></span><span class="ak-spark">'+SPARK+'</span></span>';
+/* the banner at the top of the product page */
+function askEntry(){
+  return '<button type="button" class="ask ai ask-soon ak-entry" data-ak-open aria-haspopup="dialog" aria-controls="ak">'+akFace('ak-face-lg')+
+    '<span class="ask-field"><span class="ask-soon-title">Ask Ankur <i class="ak-live"><b></b>Live</i></span><span class="ask-soon-copy">Quick answers on my work, skills and results, with sources.</span></span>'+
+    '<span class="ask-soon-cta"><span>Ask a question</span>'+AK.arrow+'</span></button>';
 }
-function askResizeInput(q){q.style.height='auto';q.style.height=Math.min(q.scrollHeight,96)+'px';q.style.overflowY=q.scrollHeight>96?'auto':'hidden';updateAskPanelPosition()}
-async function askReadPdf(file){
-  const input=$('#ask-pdf');if(!file)return;
-  askNotice='Reading PDF…';askUpdateInput();askPanel('');
+
+let askChat=[],askPdf=null,askBusy=null,askLastFocus=null,askWarm=false;
+try{askChat=JSON.parse(sessionStorage.getItem('ak-chat')||'[]').filter(t=>t&&t.q&&t.status!=='pending'&&t.status!=='streaming')}catch(_){}
+const akSave=()=>{try{sessionStorage.setItem('ak-chat',JSON.stringify(askChat.slice(-12)))}catch(_){}};
+const akOpenNow=()=>document.documentElement.classList.contains('ak-on');
+
+function askMount(){
+  if($('#ak')) return;
+  document.body.insertAdjacentHTML('beforeend',
+    '<button type="button" class="ak-launch" data-ak-open aria-haspopup="dialog" aria-controls="ak">'+akFace()+'<span class="ak-launch-t">Ask Ankur</span></button>'+
+    '<div class="ak-hello" hidden><button type="button" class="ak-hello-body" data-ak-open><b>Hi, I’m Ankur’s AI.</b> Ask about his AI launches, results or fit for your role. Answers in seconds, with sources.</button><button type="button" class="ak-hello-x" data-ak-hello-x aria-label="Dismiss">'+AK.close+'</button></div>'+
+    '<div class="ak-veil" data-ak-close hidden></div>'+
+    '<section id="ak" class="ak" role="dialog" aria-modal="true" aria-labelledby="ak-title" hidden><div class="ak-aura" aria-hidden="true"><i></i><i></i><i></i></div>'+
+      '<header class="ak-head">'+akFace('ak-face-head')+'<div class="ak-id"><h2 id="ak-title">Ask Ankur <span class="ak-tag">AI</span></h2><p>Answers only from this portfolio</p></div>'+
+        '<button type="button" class="ak-icon" data-ak-new aria-label="Start a new chat" title="New chat">'+AK.fresh+'</button><button type="button" class="ak-icon" data-ak-close aria-label="Close Ask Ankur" title="Close (Esc)">'+AK.close+'</button></header>'+
+      '<div class="ak-log" id="ak-log" role="log" aria-live="polite"></div>'+
+      '<form class="ak-compose" id="ak-form" novalidate><div class="ak-file" id="ak-file" hidden></div>'+
+        '<div class="ak-box"><button type="button" class="ak-icon ak-clip" data-ak-pdf aria-label="Attach a job description PDF" title="Attach a job description (PDF, up to 3 pages)">'+AK.clip+'</button>'+
+        '<textarea id="ak-ques" rows="1" maxlength="'+ASK_INPUT_MAX+'" placeholder="Ask about Ankur’s work…" aria-label="Your question" enterkeyhint="send"></textarea>'+
+        '<button type="submit" class="ak-send" id="ak-send" aria-label="Send" disabled>'+AK.send+'</button></div>'+
+        '<p class="ak-fine" id="ak-fine">Answers come only from this site and can be imperfect. Every fact links to its source.</p>'+
+        '<input type="file" id="ak-pdf" accept="application/pdf,.pdf" hidden></form>'+
+    '</section>');
+  // a one-time hello next to the launcher, like a host who notices you're browsing
+  let seen=false;try{seen=!!sessionStorage.getItem('ak-hello')}catch(_){}
+  if(!seen&&!askChat.length) setTimeout(()=>{const h=$('.ak-hello');if(!h||akOpenNow())return;h.hidden=false;setTimeout(akHelloOff,14000)},6000);
+}
+function akHelloOff(){const h=$('.ak-hello');if(h)h.hidden=true;try{sessionStorage.setItem('ak-hello','1')}catch(_){}}
+
+function akOpen(){
+  askMount(); akHelloOff();
+  const p=$('#ak'),veil=$('.ak-veil');
+  if(!akOpenNow()){askLastFocus=document.activeElement;p.hidden=false;veil.hidden=false;akRender();p.offsetWidth;document.documentElement.classList.add('ak-on')}
+  if(!askWarm){askWarm=true;fetch(ASK_URL).catch(()=>{})} // wakes the backend while the visitor reads the suggestions
+  setTimeout(()=>$('#ak-ques')?.focus({preventScroll:true}),matchMedia('(max-width:640px)').matches?350:60);
+}
+function akClose(){
+  if(!akOpenNow())return;
+  document.documentElement.classList.remove('ak-on');
+  const done=()=>{if(!akOpenNow()){$('#ak').hidden=true;$('.ak-veil').hidden=true}};
+  matchMedia('(prefers-reduced-motion: reduce)').matches?done():setTimeout(done,320);
+  if(askLastFocus&&askLastFocus.isConnected)askLastFocus.focus({preventScroll:true});
+}
+
+/* cited sources, one per page, numbered in the order the answer first cites them */
+function akSrcMap(t){
+  const list=[],byUrl=new Map(),n2d={};
+  for(const m of String(t.a||'').matchAll(/\[(\d+)\]/g)){const n=+m[1];if(n2d[n])continue;const s=(t.sources||[]).find(x=>x.n===n);if(!s)continue;
+    let d=byUrl.get(s.url);if(!d){list.push(s);d=list.length;byUrl.set(s.url,d)}n2d[n]=d}
+  return{list,n2d};
+}
+const akPages=src=>{const seen=new Set();return(src||[]).filter(s=>s.url&&!seen.has(s.url)&&seen.add(s.url)).slice(0,4)};
+const akLabel=s=>String(s.url==='#'?'Profile':s.title||'').replace(/^I\s/,'').replace(/:.*$/,'').replace(/^./,c=>c.toUpperCase());
+const akMail=h=>h.replace(/john\.ankur\.ray@gmail\.com/g,'<a href="mailto:'+ASK_MAIL+'">'+ASK_MAIL+'</a>');
+/* a small, safe markdown: paragraphs, **bold**, bullets, pipe tables and [n] citations */
+function akMd(text,map){
+  const inline=x=>akMail(esc(x.replace(/\s*\[\d+\s*[-–]\s*\d+\]/g,'')).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')).replace(/\s*((?:\[\d+\])+)/g,(m,g)=>{
+    const ds=[...new Set([...g.matchAll(/\d+/g)].map(n=>map.n2d[n[0]]).filter(Boolean))];
+    return ds.map(d=>'<a class="ak-c" href="'+esc(map.list[d-1].url)+'" data-ak-src title="'+esc(akLabel(map.list[d-1]))+'">'+d+'</a>').join('')});
+  let out='',list=null,rows=null,stats=null;
+  const cell=x=>{const f=/^(strong|partial|gap)$/i.exec(x.replace(/\s*\[\d+\]/g,'').trim());return f?'<span class="ak-fit-pill '+f[1].toLowerCase()+'">'+esc(f[1])+'</span>':inline(x)};
+  const flush=()=>{if(list){out+='<ul>'+list.join('')+'</ul>';list=null}
+    if(stats){out+='<div class="ak-stats">'+stats.join('')+'</div>';stats=null}
+    if(rows){const r=rows.filter(l=>!/^\|[\s:|-]+\|$/.test(l)).map(l=>l.slice(1,-1).split('|').map(c=>c.trim()));
+      out+='<div class="ak-table"><table>'+r.map((c,n)=>'<tr>'+c.map(x=>n?'<td>'+cell(x)+'</td>':'<th>'+inline(x)+'</th>').join('')+'</tr>').join('')+'</table></div>';rows=null}};
+  for(const raw of String(text||'').replace(/\r/g,'').split('\n')){const l=raw.trim();
+    const st=/^@stat\s+([^|]+?)\s*(?:\|\s*(.*))?$/.exec(l);
+    if(st){if(list||rows)flush();stats=stats||[];stats.push('<div class="ak-stat" style="--i:'+stats.length+'"><b>'+esc(st[1].replace(/\s*\[\d+\]/g,''))+'</b><span>'+inline(st[2]||'')+'</span></div>');continue}
+    if(/^\|.*\|$/.test(l)){if(list||stats)flush();(rows=rows||[]).push(l);continue}
+    if(/^([-*•]|\d+[.)])\s+/.test(l)){if(rows||stats)flush();(list=list||[]).push('<li>'+inline(l.replace(/^([-*•]|\d+[.)])\s+/,''))+'</li>');continue}
+    flush();if(l)out+='<p>'+inline(l)+'</p>'}
+  flush();return out;
+}
+const akChips=(src,cls)=>src.length?'<div class="ak-refs'+(cls?' '+cls:'')+'">'+src.map((s,n)=>'<a href="'+esc(s.url)+'" data-ak-src><i>'+(n+1)+'</i><span>'+esc(akLabel(s))+'</span></a>').join('')+'</div>':'';
+const akSec=(label,html,cls)=>html?'<section class="ak-sec'+(cls?' '+cls:'')+'"><h4>'+label+'</h4>'+html+'</section>':'';
+const akFollow=(t,i)=>{
+  if(i!==askChat.length-1||askBusy)return '';
+  const qs=(t.followups||[]).map(q=>'<button type="button" data-ak-ask="'+esc(q)+'">'+esc(q)+'</button>').join('');
+  const cv=askChat.some(x=>x.status==='answered')?'<button type="button" class="ak-cta" data-ak-cv>'+AK.doc+'Get Ankur’s CV</button>':'';
+  return akSec('Related',qs||cv?'<div class="ak-fu">'+qs+cv+'</div>':'','ak-rel');
+};
+/* the summary is the answer's first paragraph, unless it opens straight into a list or table */
+const AK_BLOCK=/^\s*([-*•|@]|\d+[.)]\s)/;
+function akSplitAns(text){
+  const lines=String(text||'').replace(/\r/g,'').split('\n'),k=lines.findIndex(l=>l.trim());
+  if(k<0)return['',''];
+  if(AK_BLOCK.test(lines[k]))return['',lines.join('\n')];
+  let e=k;while(e+1<lines.length&&lines[e+1].trim()&&!AK_BLOCK.test(lines[e+1]))e++;
+  return[lines.slice(k,e+1).join(' '),lines.slice(e+1).join('\n')];
+}
+function akAnswer(t,live){
+  const map=akSrcMap(t),[sum,rest]=akSplitAns(live?String(t.a).replace(/\s*\[\d*$/,''):t.a);
+  let body=(sum?'<div class="ak-sum">'+akMd(sum,map)+'</div>':'')+akSec(/\|\s*Fit\s*\||\*\*(Matches|Gaps)\b/i.test(rest)?'Fit check':/^\s*@stat/m.test(rest)?'At a glance':/^\s*\|/m.test(rest)?'Overview':'Key points',akMd(rest,map));
+  if(live)return '<div class="ak-card live">'+(body?body.replace(/(<\/(?:p|li|td)>)(?![\s\S]*<\/(?:p|li|td)>)/,'<span class="ak-caret"></span>$1'):'<div class="ak-sum"><p><span class="ak-caret"></span></p></div>')+'</div>';
+  const src=map.list.length?map.list:akPages(t.sources).filter(x=>x.url!=='#').slice(0,2);
+  return '<div class="ak-card">'+body+akSec('Sources',akChips(src))+'</div>';
+}
+function akBody(t,i){
+  if(t.status==='pending')return '<div class="ak-card live ak-wait"><div class="ak-think">'+akFace('ak-face-s think')+'<span class="ak-shimmer">'+esc(t.stage||'Searching Ankur’s work…')+'</span></div><div class="ak-skel" aria-hidden="true"><i></i><i></i><i></i></div></div>';
+  if(t.status==='streaming')return akAnswer(t,true);
+  if(t.status==='answered'||(t.status==='stopped'&&t.a))
+    return akAnswer(t,false)+(t.status==='stopped'?'<p class="ak-note">Stopped.</p>':'')+
+      (t.status==='answered'?'<div class="ak-acts"><button type="button" class="ak-icon" data-ak-copy="'+i+'" aria-label="Copy answer" title="Copy">'+AK.copy+'</button>'+
+        '<button type="button" class="ak-icon'+(t.vote===1?' on':'')+'" data-ak-vote="1" data-i="'+i+'" aria-label="Helpful" aria-pressed="'+(t.vote===1)+'" title="Helpful">'+AK.up+'</button>'+
+        '<button type="button" class="ak-icon'+(t.vote===-1?' on':'')+'" data-ak-vote="-1" data-i="'+i+'" aria-label="Not helpful" aria-pressed="'+(t.vote===-1)+'" title="Not helpful">'+AK.down+'</button>'+(t.vote?'<small>Thanks for the feedback</small>':'')+'</div>':'')+akFollow(t,i);
+  if(['declined','no_match','policy','rate_limited','invalid'].includes(t.status)){
+    const more=t.status==='no_match'&&i===askChat.length-1&&!(t.followups||[]).length?{...t,followups:ASK_SUGG.slice(0,2)}:t;
+    return '<p>'+akMail(esc(String(t.a||'').replace(/\s*\[\d+\]/g,'')))+'</p>'+akFollow(more,i)}
+  if(t.status==='unverified'||t.status==='retrieval_only')
+    return '<p class="ak-note">I couldn’t confirm an exact answer, so here’s where Ankur’s site covers it:</p>'+akChips(akPages(t.sources),'ak-src-list');
+  if(t.status==='stopped')return '<p class="ak-note">Stopped.</p>';
+  const onSite=/github\.io$|netlify\.app$|^(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+)$/.test(location.hostname);
+  return '<p class="ak-note">'+(onSite?'Couldn’t reach Ask Ankur just now. Check your connection and try again.':'Ask Ankur runs on the live site. <a href="'+LIVE_SITE+'" target="_blank" rel="noopener">Open ankurray1.github.io</a>')+'</p>'+
+    (onSite?'<button type="button" class="ak-retry" data-ak-retry="'+i+'">'+AK.fresh+'Try again</button>':'');
+}
+function akEmpty(){
+  const s=ASK_SUGG;
+  return '<div class="ak-empty">'+akFace('ak-face-xl')+'<p class="ak-hi">What would you like to know about Ankur?</p><p class="ak-sub">Short answers about his product work, AI launches, skills and results. Every fact links to where it’s shown on this site.</p>'+
+    '<h4 class="ak-sugg-h">Recruiters often ask</h4><div class="ak-sugg">'+s.map(q=>'<button type="button" data-ak-ask="'+esc(q)+'"><span>'+esc(q)+'</span>'+AK.arrow+'</button>').join('')+
+    '<button type="button" class="ak-fit" data-ak-pdf>'+AK.clip+'<span><b>Check his fit for your role</b><small>Attach a job description, PDF up to 3 pages</small></span>'+AK.arrow+'</button></div></div>';
+}
+function akRender(){
+  const log=$('#ak-log');if(!log)return;
+  log.innerHTML=askChat.length?askChat.map((t,i)=>'<div class="ak-ques">'+(t.jd?'<small>'+AK.doc+esc(t.jd)+'</small>':'')+esc(t.q)+'</div><div class="ak-ans" data-i="'+i+'">'+akBody(t,i)+'</div>').join(''):akEmpty();
+  log.scrollTop=log.scrollHeight;akControls();
+}
+let akPaintQ=0;
+function akPaint(i){ // one repaint per frame while the answer streams; follows the text unless the visitor scrolled up
+  if(akPaintQ)return;akPaintQ=requestAnimationFrame(()=>{akPaintQ=0;const log=$('#ak-log'),el=log&&log.querySelector('.ak-ans[data-i="'+i+'"]');if(!el)return;
+    const stick=log.scrollHeight-log.scrollTop-log.clientHeight<80;el.innerHTML=akBody(askChat[i],i);if(stick)log.scrollTop=log.scrollHeight});
+}
+function akControls(){
+  const q=$('#ak-ques'),b=$('#ak-send'),fine=$('#ak-fine');if(!q||!b)return;
+  if(askBusy){b.disabled=false;b.type='button';b.dataset.akStop='';b.innerHTML=AK.stop;b.setAttribute('aria-label','Stop answering');b.classList.add('stop')}
+  else{b.type='submit';delete b.dataset.akStop;b.innerHTML=AK.send;b.setAttribute('aria-label','Send');b.classList.remove('stop');b.disabled=!q.value.trim()&&!askPdf}
+  const n=q.value.length;fine.textContent=n>ASK_INPUT_MAX-200?n.toLocaleString()+' / '+ASK_INPUT_MAX.toLocaleString()+' characters. Attach a PDF for longer job descriptions.':'Answers come only from this site and can be imperfect. Every fact links to its source.';
+  q.placeholder=askPdf?'Add a question, or just send for a fit check':'Ask about Ankur’s work…';
+}
+function akFileRow(msg,bad){
+  const f=$('#ak-file');if(!f)return;
+  f.hidden=!askPdf&&!msg;f.classList.toggle('bad',!!bad);
+  f.innerHTML=askPdf?AK.doc+'<span><b>'+esc(askPdf.name)+'</b><small>'+askPdf.pages+' page'+(askPdf.pages>1?'s':'')+' · job description</small></span><button type="button" class="ak-icon" data-ak-pdf-x aria-label="Remove PDF">'+AK.close+'</button>':'<span>'+esc(msg||'')+'</span>';
+  akControls();
+}
+async function akReadPdf(file){
+  if(!file)return;akFileRow('Reading PDF…');
   try{
-    if(file.type!=='application/pdf'&&!file.name.toLowerCase().endsWith('.pdf'))throw new Error('Please choose a PDF file.');
+    if(file.type!=='application/pdf'&&!/\.pdf$/i.test(file.name))throw new Error('Please choose a PDF file.');
     const lib=await pdfLib(),pdf=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
-    if(pdf.numPages>ASK_PDF_MAX_PAGES)throw new Error('This PDF has '+pdf.numPages+' pages. Please upload a PDF with no more than 3 pages.');
-    const pages=[];
-    for(let n=1;n<=pdf.numPages;n++){const page=await pdf.getPage(n),content=await page.getTextContent();pages.push(content.items.map(x=>typeof x.str==='string'?x.str:'').join(' '))}
+    if(pdf.numPages>ASK_PDF_MAX_PAGES)throw new Error('This PDF has '+pdf.numPages+' pages. Please use one with up to 3.');
+    const pages=[];for(let n=1;n<=pdf.numPages;n++){const c=await(await pdf.getPage(n)).getTextContent();pages.push(c.items.map(x=>typeof x.str==='string'?x.str:'').join(' '))}
     const text=pages.join('\n').replace(/[ \t]+/g,' ').replace(/\n{2,}/g,'\n').trim();
-    if(!text)throw new Error('I couldn’t read selectable text in this PDF. Please use a text-based PDF or paste the relevant section.');
-    if(text.length>ASK_PDF_TEXT_MAX)throw new Error('This PDF contains more than 12,000 characters. Please upload a shorter excerpt (up to 3 pages).');
-    askPdf={name:file.name,pages:pdf.numPages,text};askNotice='PDF ready. Add a question, or ask for a role-fit summary.';
-  }catch(err){askPdf=null;askNotice=err&&err.message?err.message:'Could not read this PDF. Please try another file.'}
-  if(input)input.value='';askUpdateInput();askPanel('');
+    if(!text)throw new Error('No selectable text in this PDF. Try a text-based PDF.');
+    if(text.length>ASK_PDF_TEXT_MAX)throw new Error('This PDF is too long. Please use a shorter excerpt.');
+    askPdf={name:file.name,pages:pdf.numPages,text};akFileRow();$('#ak-ques').focus({preventScroll:true});
+  }catch(err){askPdf=null;akFileRow(err&&err.message||'Couldn’t read this PDF. Please try another file.',true)}
+  const inp=$('#ak-pdf');if(inp)inp.value='';
 }
-document.addEventListener('focusin',e=>{if(e.target.id==='ask-q'&&$('#ask-panel')?.hidden){const p=$('#ask-panel');if(p.innerHTML.trim()){p.hidden=false;askFocus(true)}else askPanel('')}});
-document.addEventListener('input',e=>{if(e.target.id!=='ask-q')return;askNotice='';askResizeInput(e.target);askUpdateInput()});
-document.addEventListener('paste',e=>{
-  const q=e.target;if(q.id!=='ask-q')return;
-  const clip=e.clipboardData?.getData('text')||'',selected=q.value.length-(q.selectionEnd-q.selectionStart);
-  if(selected+clip.length>ASK_INPUT_MAX){e.preventDefault();askNotice='This text exceeds the 2,000-character limit. Upload a PDF job description (up to 3 pages) instead.';askUpdateInput();askPanel('')}
-});
-document.addEventListener('change',e=>{if(e.target.id==='ask-pdf')askReadPdf(e.target.files?.[0])});
+
+async function akAsk(raw,retryOf){
+  if(askBusy)return;
+  const jd=retryOf!=null?askChat[retryOf].jdData:askPdf;
+  let q=String(raw||'').trim().slice(0,ASK_INPUT_MAX);if(!q&&!jd)return;
+  const question=q||'Check Ankur’s fit for this role';
+  const t={q:question,jd:jd?jd.name:'',status:'pending',a:'',sources:[],followups:[]};
+  if(retryOf!=null)askChat.splice(retryOf,1);
+  askChat.push(t);const i=askChat.length-1;
+  if(jd)Object.defineProperty(t,'jdData',{value:jd,enumerable:false}); // kept for a retry, never saved
+  const q0=$('#ak-ques');if(q0){q0.value='';q0.style.height=''}askPdf=null;akFileRow();
+  const ctrl=new AbortController();askBusy=ctrl;akRender();
+  const timer=setTimeout(()=>ctrl.abort('timeout'),ASK_TIMEOUT);
+  const history=askChat.slice(0,i).filter(x=>x.status==='answered').slice(-2).map(x=>({q:x.q,a:x.a}));
+  try{
+    const res=await fetch(ASK_URL,{method:'POST',signal:ctrl.signal,headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({question:q,history,stream:true,jobDescription:jd?jd.text:'',jobDescriptionPages:jd?jd.pages:0})});
+    if(!(res.headers.get('content-type')||'').includes('event-stream')){
+      const j=await res.json();Object.assign(t,{status:j.status||'error',a:j.answer||j.error||'',sources:j.sources||[],followups:j.followups||[],id:j.id});
+    }else{
+      const rd=res.body.getReader(),dec=new TextDecoder();let buf='';
+      for(;;){const{value,done}=await rd.read();if(done)break;buf+=dec.decode(value,{stream:true});
+        let k;while((k=buf.indexOf('\n\n'))>=0){const ev=buf.slice(0,k);buf=buf.slice(k+2);
+          const name=(/^event: (.+)$/m.exec(ev)||[])[1],data=JSON.parse((/^data: (.+)$/m.exec(ev)||[])[1]||'{}');
+          if(name==='meta'){t.sources=data.sources||[];const n=akPages(t.sources).length;t.stage='Reading '+n+' page'+(n===1?'':'s')+' of Ankur’s work…';akPaint(i)}
+          else if(name==='delta'){t.status='streaming';t.a+=data.t||'';akPaint(i)}
+          else if(name==='done'){Object.assign(t,{status:data.status,id:data.id,followups:data.followups||[],sources:data.sources||t.sources});t.a=data.answer||(data.status==='answered'?t.a:'')}}}
+      if(t.status==='pending'||t.status==='streaming')t.status='error';
+    }
+  }catch(e){t.status=ctrl.signal.reason==='stop'?'stopped':'error';if(t.status==='error')t.a=''}
+  clearTimeout(timer);askBusy=null;akSave();akRender();
+}
+function akVote(i,vote){
+  const t=askChat[i];if(!t||!t.id)return;t.vote=t.vote===vote?0:vote;akSave();akPaint(i);
+  if(t.vote)fetch(ASK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({feedback:{id:t.id,vote:t.vote}})}).catch(()=>{});
+}
+
 document.addEventListener('click',e=>{
-  if(e.target.closest('[data-ask-close]')){e.preventDefault();closeAsk();return}
-  if(e.target.closest('[data-ask-pdf]')){e.preventDefault();$('#ask-pdf')?.click();return}
-  if(e.target.closest('[data-ask-pdf-remove]')){askPdf=null;askNotice='PDF removed.';askUpdateInput();askPanel('');return}
-  const s=e.target.closest('[data-ask]');if(s){const q=$('#ask-q');q.value=s.dataset.ask;askResizeInput(q);askUpdateInput();askLive(s.dataset.ask);return}
-  if(e.target.closest('[data-ask-reset]')){$('#ask-q').value='';askResizeInput($('#ask-q'));askNotice='';askUpdateInput();askPanel('');$('#ask-q').focus({preventScroll:true});return}
-  if(e.target.closest('[data-mic]'))askPanel('');
-  if(e.target.closest('#ask')&&!e.target.closest('textarea,button,input,a'))$('#ask-q')?.focus({preventScroll:true});
+  const x=e.target.closest('[data-ak-open],[data-ak-close],[data-ak-hello-x],[data-ak-new],[data-ak-ask],[data-ak-pdf],[data-ak-pdf-x],[data-ak-stop],[data-ak-copy],[data-ak-vote],[data-ak-retry],[data-ak-src],[data-ak-cv]');if(!x)return;
+  const d=x.dataset;
+  if(d.akOpen!==undefined){e.preventDefault();akOpen()}
+  else if(d.akClose!==undefined)akClose();
+  else if(d.akHelloX!==undefined)akHelloOff();
+  else if(d.akNew!==undefined){if(askBusy)askBusy.abort('stop');askChat=[];askPdf=null;akSave();akFileRow();akRender();$('#ak-ques').focus()}
+  else if(d.akAsk!==undefined)akAsk(d.akAsk);
+  else if(d.akPdf!==undefined)$('#ak-pdf').click();
+  else if(d.akPdfX!==undefined){askPdf=null;akFileRow()}
+  else if(d.akStop!==undefined){e.preventDefault();askBusy&&askBusy.abort('stop')}
+  else if(d.akCopy!==undefined){const t=askChat[+d.akCopy];navigator.clipboard?.writeText(String(t.a).replace(/\s*\[\d+\]/g,'').replace(/\*\*/g,'')).then(()=>{x.innerHTML=AK.check;setTimeout(()=>{if(x.isConnected)x.innerHTML=AK.copy},1400)},()=>{})}
+  else if(d.akVote!==undefined)akVote(+d.i,+d.akVote);
+  else if(d.akRetry!==undefined){const t=askChat[+d.akRetry];akAsk(t.jd&&t.q==='Check Ankur’s fit for this role'?'':t.q,+d.akRetry)}
+  else if(d.akSrc!==undefined){if(matchMedia('(max-width:640px)').matches)akClose()} // the link itself navigates; on a phone the sheet steps aside
+  else if(d.akCv!==undefined){akClose();const go=()=>setTimeout(()=>{const b=$('[data-cv-toggle]');if(b){b.scrollIntoView({block:'center',behavior:'smooth'});if(b.getAttribute('aria-expanded')!=='true')b.click()}},120);
+    if(route()==='home')go();else{addEventListener('hashchange',go,{once:true});location.hash='#'}}
 });
-addEventListener('resize',updateAskPanelPosition);
+/* the banner's colour follows the pointer, like light moving across silk */
+document.addEventListener('pointermove',e=>{const b=e.target.closest&&e.target.closest('.ak-entry');if(!b)return;const r=b.getBoundingClientRect();
+  b.style.setProperty('--mx',(e.clientX-r.left)+'px');b.style.setProperty('--my',(e.clientY-r.top)+'px')},{passive:true});
+document.addEventListener('submit',e=>{if(e.target.id==='ak-form'){e.preventDefault();akAsk($('#ak-ques').value)}});
+document.addEventListener('change',e=>{if(e.target.id==='ak-pdf')akReadPdf(e.target.files&&e.target.files[0])});
+document.addEventListener('input',e=>{if(e.target.id!=='ak-ques')return;const q=e.target;q.style.height='auto';q.style.height=Math.min(q.scrollHeight,132)+'px';akControls()});
+addEventListener('hashchange',()=>{if(route()==='founder')akClose()});
 addEventListener('keydown',e=>{
-  if(e.target?.id==='ask-q'&&e.key==='Enter'&&e.ctrlKey&&e.shiftKey){e.preventDefault();const q=e.target;q.setRangeText('\n',q.selectionStart,q.selectionEnd,'end');q.dispatchEvent(new Event('input',{bubbles:true}));return}
-  if(e.target?.id==='ask-q'&&e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('#ask')?.requestSubmit();return}
-  if(e.key==='Escape'&&document.documentElement.classList.contains('ask-on'))closeAsk();
+  if(!akOpenNow())return;
+  if(e.key==='Escape'){e.preventDefault();akClose();return}
+  if(e.target.id==='ak-ques'&&e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();if(!askBusy)akAsk(e.target.value);return}
+  if(e.key==='Tab'){ // keep focus inside the panel while it's open
+    const f=[...$('#ak').querySelectorAll('button:not([disabled]),a[href],textarea')].filter(n=>n.offsetParent);if(!f.length)return;
+    const a=f[0],z=f[f.length-1];if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}
 });
-document.addEventListener('submit',e=>{if(e.target.id==='ask'){e.preventDefault();const q=$('#ask-q').value.trim();if(q.length>ASK_INPUT_MAX){askNotice='Please keep the question under 2,000 characters or upload a PDF job description (up to 3 pages).';askUpdateInput();askPanel('');return}askLive(q)}});
-/* Ask Ankur, live: hybrid retrieval over this site's content plus an LLM that may only use what it retrieves.
-   The backend lives in Supabase (supabase/functions/ask in the repo); this page only sends the question. */
-const ASK_ENABLED=false,ASK_URL='https://zzkppvuedkkcdocmisje.supabase.co/functions/v1/ask', LIVE_SITE='https://ankurray1.github.io/portfolio/';
-const ASK_INPUT_MAX=2000,ASK_PDF_MAX_PAGES=3,ASK_PDF_TEXT_MAX=12000,ASK_OUTPUT_MAX=1800;
-let askSeq=0;
-const askCite=(t,src)=>esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\[(\d+)\]/g,(m,n)=>{const x=src[n-1];return x?'<a class="ask-cite" href="'+esc(x.url)+'" title="'+esc(x.title)+'">'+n+'</a>':''}).replace(/^\s*[-*]\s+/gm,'• ').replace(/\n{2,}/g,'\n').replace(/\n/g,'<br>');
-/* the numbers the answer actually cites; the source list shows only those (all of them when nothing is cited) */
-const askCited=(t,src)=>{const used=new Set([...String(t||'').matchAll(/\[(\d+)\]/g)].map(m=>+m[1]));const c=src.filter(x=>used.has(x.n));return c.length?c:src};
-const askSources=src=>src.length?'<div class="ask-meta"><span>Sources on this site</span></div><ol class="ask-sources">'+src.map(x=>'<li><a href="'+esc(x.url)+'"><i>'+x.n+'</i><span>'+esc(x.title)+(x.section?' <small>'+esc(x.section)+'</small>':'')+'</span></a></li>').join('')+'</ol>':'';
-async function askLive(q){
-  if(!ASK_ENABLED)return;
-  const jd=askPdf?.text||'';
-  if(!q&&!jd)return askPanel('');
-  const question=q||'Compare this job description with Ankur’s portfolio experience. Summarize matching evidence and gaps.';
-  const p=$('#ask-panel');if(!p)return;
-  const id=++askSeq,head='<div class="ask-panel-head"><strong>Ask Ankur AI</strong><button type="button" class="ask-close" data-ask-close aria-label="Close Ask Ankur AI" title="Close">×</button></div>';
-  const file=askPdf?'<div class="ask-attachment"><span>PDF attached · '+esc(askPdf.name)+' · '+askPdf.pages+' pages</span><button type="button" data-ask-pdf-remove>Remove</button></div>':'';
-  p.innerHTML=head+'<div class="bubble q">'+esc(question)+'</div>'+file+'<div class="bubble a ask-wait" aria-live="polite"><span class="ask-dots" aria-hidden="true"><i></i><i></i><i></i></span>Searching Ankur’s site…</div>';
-  p.hidden=false;askFocus(true);
-  let j=null;
-  try{const res=await fetch(ASK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question,jobDescription:jd,jobDescriptionPages:askPdf?.pages||0})});j=await res.json()}catch(err){j=null}
-  if(id!==askSeq)return;
-  const mail=state.profile.email?', or write to <span class="sel">'+esc(state.profile.email)+'</span>':'';
-  const onSite=/github\.io$|netlify\.app$|^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-  let answer=j&&typeof j.answer==='string'?j.answer:'';
-  if(answer.length>ASK_OUTPUT_MAX)answer=answer.slice(0,ASK_OUTPUT_MAX-1).trimEnd()+'…';
-  const a=!j?(onSite?'Ask Ankur could not be reached just now. Please try again in a moment'+mail+'.':'Ask Ankur runs on the live site. <a href="'+LIVE_SITE+'" target="_blank" rel="noopener">Open it on ankurray1.github.io</a> to ask your question.')
-    :j.status==='answered'?askCite(answer,j.sources||[])
-    :j.status==='retrieval_only'?'Here is where the site covers this:'
-    :esc(answer||j.error||'Something went wrong. Please try again.');
-  p.innerHTML=head+'<div class="bubble q">'+esc(question)+'</div>'+(askPdf?file:'')+'<div class="bubble a" aria-live="polite">'+a+'</div>'+(j&&j.sources?askSources(j.status==='answered'?askCited(answer,j.sources):j.sources):'')+(j&&j.status==='answered'?'<small class="ask-output-limit">'+answer.length.toLocaleString()+' / '+ASK_OUTPUT_MAX.toLocaleString()+' characters</small>':'')+(askPdf?'<div class="ask-attachment"><span>PDF attached · '+esc(askPdf.name)+' · '+askPdf.pages+' pages</span><button type="button" data-ask-pdf-remove>Remove</button></div>':'')+'<div class="ask-upload"><span><b>Longer job description?</b><small>Upload a PDF of up to 3 pages</small></span><button type="button" data-ask-pdf>'+(askPdf?'Replace PDF':'Upload PDF')+'</button></div><button type="button" class="ask-reset" data-ask-reset>Ask something else</button>';
-}
+askMount();
 $('#detail').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.close()});
 /* coming back from a project page lands on that project's card, not the top of the list */
 addEventListener('hashchange',e=>{const old=(String(e.oldURL).split('#')[1]||'');render();
