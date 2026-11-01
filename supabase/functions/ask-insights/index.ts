@@ -1,6 +1,8 @@
 // Ask Ankur insights · the numbers behind the site assistant, for Ankur only.
 // POST {"days": 7 | 30 | 90} with header x-insights-key → summary, daily counts, outcomes, top questions,
 // feedback (votes with their reasons and notes) and recent questions. The key is checked against SHA-256 hashes in public.insights_keys.
+// Website traffic comes from the GA4 Data API when the secrets GA4_PROPERTY_ID (the numeric property id) and
+// GA4_SERVICE_ACCOUNT (a service account's JSON key, added to the property as a Viewer) are set; otherwise ga.connected is false.
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -20,6 +22,64 @@ const sha256 = async (s: string) =>
     .map((b) => b.toString(16).padStart(2, '0')).join('');
 
 type Row = { id: string; created_at: string; question: string; status: string; answer: string | null; feedback: number | null; first_token_ms: number | null; total_ms: number | null; has_jd: boolean; unverified: string[] | null; feedback_reasons: string[] | null; feedback_note: string | null };
+
+/* GA4 Data API: a service-account token (signed here, cached for its hour), then one batch of reports and a realtime count */
+let gaToken: { value: string; exp: number } | null = null;
+const b64u = (b: Uint8Array) => btoa(String.fromCharCode(...b)).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
+const enc = new TextEncoder();
+async function gaAccessToken(sa: { client_email: string; private_key: string }) {
+  if (gaToken && gaToken.exp > Date.now()) return gaToken.value;
+  const now = Math.floor(Date.now() / 1000);
+  const head = b64u(enc.encode(JSON.stringify({ alg: 'RS256', typ: 'JWT' })));
+  const claim = b64u(enc.encode(JSON.stringify({ iss: sa.client_email, scope: 'https://www.googleapis.com/auth/analytics.readonly', aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3600 })));
+  const der = Uint8Array.from(atob(sa.private_key.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '')), (c) => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey('pkcs8', der, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+  const sig = new Uint8Array(await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, enc.encode(head + '.' + claim)));
+  const r = await fetch('https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: head + '.' + claim + '.' + b64u(sig) }) });
+  const j = await r.json();
+  if (!r.ok) throw new Error('Google sign-in failed: ' + (j.error_description || j.error));
+  gaToken = { value: j.access_token, exp: Date.now() + (j.expires_in - 120) * 1000 };
+  return gaToken.value;
+}
+type GaRow = { dimensionValues?: { value: string }[]; metricValues?: { value: string }[] };
+const gaRows = (rep: { rows?: GaRow[] } | undefined) => (rep?.rows ?? []).map((r) => ({ d: (r.dimensionValues ?? []).map((x) => x.value), m: (r.metricValues ?? []).map((x) => Number(x.value)) }));
+async function gaTraffic(days: number) {
+  const property = Deno.env.get('GA4_PROPERTY_ID'), saJson = Deno.env.get('GA4_SERVICE_ACCOUNT');
+  if (!property || !saJson) return { connected: false };
+  try {
+    const token = await gaAccessToken(JSON.parse(saJson));
+    const api = (path: string, body: unknown) => fetch(`https://analyticsdata.googleapis.com/v1beta/properties/${property}:${path}`, {
+      method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(9000) });
+    const range = [{ startDate: `${days - 1}daysAgo`, endDate: 'today' }];
+    const m = (...names: string[]) => names.map((name) => ({ name }));
+    const d = (...names: string[]) => names.map((name) => ({ name }));
+    const [batch, live] = await Promise.all([
+      api('batchRunReports', { requests: [
+        { dateRanges: range, metrics: m('activeUsers', 'sessions', 'screenPageViews', 'newUsers') },
+        { dateRanges: range, dimensions: d('date'), metrics: m('activeUsers', 'sessions'), orderBys: [{ dimension: { dimensionName: 'date' } }] },
+        { dateRanges: range, dimensions: d('country', 'city'), metrics: m('activeUsers', 'sessions'), orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }], limit: 250 },
+        // each portfolio section is sent as its own page_view titled "Ankur Ray · <section>"; split by country for the filter
+        { dateRanges: range, dimensions: d('pageTitle', 'country'), metrics: m('screenPageViews', 'activeUsers'), orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }], limit: 1000 },
+      ] }),
+      api('runRealtimeReport', { metrics: m('activeUsers') }),
+    ]);
+    const bj = await batch.json(), lj = await live.json().catch(() => ({}));
+    if (!batch.ok) return { connected: true, error: bj.error?.message ?? 'Google Analytics request failed.' };
+    const [tot, daily, places, sections] = (bj.reports ?? []).map(gaRows);
+    const t = tot?.[0]?.m ?? [0, 0, 0, 0];
+    return {
+      connected: true,
+      active_now: gaRows(lj).reduce((a, r) => a + (r.m[0] || 0), 0),
+      totals: { active_users: t[0], sessions: t[1], page_views: t[2], new_users: t[3] },
+      daily: (daily ?? []).map((r) => ({ day: `${r.d[0].slice(0, 4)}-${r.d[0].slice(4, 6)}-${r.d[0].slice(6)}`, users: r.m[0], sessions: r.m[1] })),
+      places: (places ?? []).map((r) => ({ country: r.d[0], city: r.d[1], users: r.m[0], sessions: r.m[1] })),
+      sections: (sections ?? []).map((r) => ({ title: r.d[0], country: r.d[1], views: r.m[0], users: r.m[1] })),
+    };
+  } catch (e) {
+    return { connected: true, error: String((e as Error).message ?? e) };
+  }
+}
 
 const median = (xs: number[]) => {
   if (!xs.length) return null;
@@ -49,10 +109,11 @@ Deno.serve(async (req) => {
   const since = new Date(Date.now() - days * 864e5);
   since.setUTCHours(0, 0, 0, 0);
 
-  const [{ data: rows, error }, { count: cvCount }] = await Promise.all([
+  const [{ data: rows, error }, { count: cvCount }, ga] = await Promise.all([
     db.from('ask_log').select('id, created_at, question, status, answer, feedback, first_token_ms, total_ms, has_jd, unverified, feedback_reasons, feedback_note')
       .gte('created_at', since.toISOString()).order('created_at', { ascending: false }).limit(5000),
     db.from('cv_requests').select('id', { count: 'exact', head: true }).gte('requested_at', since.toISOString()),
+    gaTraffic(days),
   ]);
   if (error) return reply({ error: 'Could not read the log.' }, 500);
   const log = (rows ?? []) as Row[];
@@ -77,6 +138,7 @@ Deno.serve(async (req) => {
 
   return reply({
     days,
+    ga,
     summary: {
       questions: log.length,
       answered: answered.length,

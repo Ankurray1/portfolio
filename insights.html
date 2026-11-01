@@ -71,6 +71,22 @@ th.n{text-align:right}
 .feed .meta{font:500 11px/1 var(--mono);color:var(--muted);margin-bottom:6px}
 .feed p{margin:4px 0 0;white-space:pre-wrap;font-size:13px;color:var(--muted)}
 .empty{color:var(--muted);font-size:13px;padding:8px 0}
+.ga{display:grid;gap:12px;margin-bottom:12px}
+.ga .kpis,.ga .two{margin-bottom:0}
+.ga-head{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:10px;margin-top:8px}
+.ga-head h2{margin:0}
+.ga-filter{display:grid;gap:4px}
+.ga-filter select{font:inherit;font-size:13px;padding:7px 10px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);min-width:200px}
+button.ga-c{all:unset;box-sizing:border-box;display:grid;grid-template-columns:120px minmax(0,1fr) 36px;align-items:center;gap:10px;width:calc(100% + 8px);cursor:pointer;border-radius:8px;padding:4px;margin:2px -4px;font-size:13px}
+button.ga-c:hover,button.ga-c.on{background:var(--sunk)}
+button.ga-c:focus-visible{outline:2px solid var(--bar)}
+.live{display:inline-flex;align-items:center;gap:8px}
+.live i{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow:0 0 0 0 var(--good);animation:live 1.8s ease-out infinite}
+@keyframes live{70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){.live i{animation:none}}
+.ga-setup p{margin:0 0 8px;color:var(--muted)}
+.ga-setup ol{margin:0;padding-left:20px;display:grid;gap:6px;font-size:13.5px}
+.ga-setup code{font:500 12px var(--mono);background:var(--sunk);padding:1px 5px;border-radius:5px}
 .reasons{margin:-4px 0 12px}
 .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
 .feed blockquote{margin:8px 0 0;padding:6px 0 6px 10px;border-left:3px solid #7B6BB0;font-size:13px}
@@ -107,6 +123,8 @@ th.n{text-align:right}
     </header>
 
     <section class="grid kpis" id="kpis"></section>
+
+    <section id="ga" class="ga"></section>
 
     <section class="grid two">
       <div class="card"><h2>Questions per day<small id="daily-note"></small></h2><div class="chart" id="chart"><div class="tip" id="tip" hidden></div></div>
@@ -164,6 +182,7 @@ function render(j){
     ['Job-fit checks',s.job_fit_checks,'job descriptions attached']
   ].map(k=>'<div class="card kpi"><span class="label">'+k[0]+'</span><b>'+esc(k[1])+'</b><small>'+esc(k[2])+'</small></div>').join('');
   chart(j.daily);
+  gaRender(j.ga,j.days);
   $('#daily-table').innerHTML='<tr><th>Day</th><th class="n">Questions</th><th class="n">Answered</th></tr>'+j.daily.slice().reverse().map(d=>'<tr><td>'+esc(d.day)+'</td><td class="n">'+d.questions+'</td><td class="n">'+d.answered+'</td></tr>').join('');
   const total=Object.values(j.outcomes).reduce((a,b)=>a+b,0);
   $('#outcomes').innerHTML=total?Object.entries(j.outcomes).sort((a,b)=>b[1]-a[1]).map(([k,v])=>'<div class="outcome"><span>'+esc(out(k)[0])+'</span><span class="track"><span class="fill" style="display:block;width:'+Math.max(3,v/total*100)+'%;background:'+out(k)[1]+'"></span></span><span class="v">'+v+'</span></div>').join(''):'<p class="empty">No questions yet in this range.</p>';
@@ -178,33 +197,70 @@ function render(j){
   $('#recent').innerHTML=j.recent.length?'<tr><th>When</th><th>Question</th><th>Outcome</th><th class="n">Time</th></tr>'+j.recent.map(r=>'<tr><td style="white-space:nowrap;color:var(--muted)">'+esc(when(r.created_at))+'</td><td class="q">'+esc(r.question)+(r.has_jd?' <span class="pill">job description</span>':'')+(r.feedback===1?' 👍':r.feedback===-1?' 👎':'')+'</td><td>'+pill(r.status)+'</td><td class="n">'+secs(r.total_ms)+'</td></tr>').join(''):'<tr><td class="empty">No questions yet.</td></tr>';
 }
 
-/* questions per day: one series, so one blue and no legend; hover or focus a bar for its numbers */
-function chart(daily){
-  const el=$('#chart'),tip=$('#tip'),W=el.clientWidth||600,H=200,padL=28,padB=22,padT=8,iw=W-padL,ih=H-padB-padT;
-  const max=Math.max(1,...daily.map(d=>d.questions)),step=max<=4?1:Math.ceil(max/4),top=Math.ceil(max/step)*step;
-  const bw=iw/daily.length,gap=Math.min(2,bw*.25),y=v=>padT+ih-(v/top)*ih;
+/* a one-series daily bar chart, so one blue and no legend; hover or focus a bar for its numbers.
+   o: {el, tip, key, label(d) → aria/tooltip second line, unit} */
+function chart(daily,o){
+  o=o||{el:'#chart',tip:'#tip',key:'questions',unit:['question','questions'],label:d=>d.answered+' answered',note:'#daily-note'};
+  const el=$(o.el),tip=$(o.tip),k=o.key,W=el.clientWidth||600,H=200,padL=28,padB=22,padT=8,iw=W-padL,ih=H-padB-padT;
+  const max=Math.max(1,...daily.map(d=>d[k])),step=max<=4?1:Math.ceil(max/4),top=Math.ceil(max/step)*step;
+  const bw=iw/Math.max(1,daily.length),gap=Math.min(2,bw*.25),y=v=>padT+ih-(v/top)*ih,unit=n=>n+' '+o.unit[n===1?0:1];
   let g='';
   for(let v=0;v<=top;v+=step)g+='<line class="grid-line" x1="'+padL+'" x2="'+W+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text class="axis" x="'+(padL-6)+'" y="'+(y(v)+3)+'" text-anchor="end">'+v+'</text>';
   const every=Math.ceil(daily.length/6);
-  daily.forEach((d,i)=>{const x=padL+i*bw,h=ih-(y(d.questions)-padT),r=Math.min(4,(bw-gap)/2);
-    g+='<g class="col" tabindex="0" data-i="'+i+'" aria-label="'+esc(d.day)+': '+d.questions+' questions, '+d.answered+' answered">'+
-      (d.questions?'<path class="b" d="M'+(x+gap/2)+','+(padT+ih)+'V'+(y(d.questions)+r)+'q0,-'+r+' '+r+',-'+r+'H'+(x+bw-gap/2-r)+'q'+r+',0 '+r+','+r+'V'+(padT+ih)+'Z" fill="var(--bar)"/>':'')+
+  daily.forEach((d,i)=>{const x=padL+i*bw,r=Math.min(4,(bw-gap)/2);
+    g+='<g class="col" tabindex="0" data-i="'+i+'" aria-label="'+esc(d.day)+': '+esc(unit(d[k]))+', '+esc(o.label(d))+'">'+
+      (d[k]?'<path class="b" d="M'+(x+gap/2)+','+(padT+ih)+'V'+(y(d[k])+r)+'q0,-'+r+' '+r+',-'+r+'H'+(x+bw-gap/2-r)+'q'+r+',0 '+r+','+r+'V'+(padT+ih)+'Z" fill="var(--bar)"/>':'')+
       '<rect class="hit" x="'+x+'" y="'+padT+'" width="'+bw+'" height="'+ih+'"/></g>';
     if(i%every===0)g+='<text class="axis" x="'+(x+bw/2)+'" y="'+(H-6)+'" text-anchor="middle">'+esc(new Date(d.day+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'}))+'</text>'});
   el.querySelector('svg')?.remove();
-  el.insertAdjacentHTML('afterbegin','<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Questions per day">'+g+'</svg>');
-  const show=n=>{const i=+n.dataset.i,d=daily[i];tip.innerHTML='';const b=document.createElement('b');b.textContent=d.questions+' question'+(d.questions===1?'':'s');const sp=document.createElement('span');
-    sp.textContent=new Date(d.day+'T00:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})+' · '+d.answered+' answered';tip.append(b,sp);
-    tip.style.left=(padL+i*bw+bw/2)/W*100+'%';tip.style.top=(d.questions?y(d.questions):padT+ih)/H*100+'%';tip.hidden=false};
+  el.insertAdjacentHTML('afterbegin','<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(o.unit[1])+' per day">'+g+'</svg>');
+  const show=n=>{const i=+n.dataset.i,d=daily[i];tip.innerHTML='';const b=document.createElement('b');b.textContent=unit(d[k]);const sp=document.createElement('span');
+    sp.textContent=new Date(d.day+'T00:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})+' · '+o.label(d);tip.append(b,sp);
+    tip.style.left=(padL+i*bw+bw/2)/W*100+'%';tip.style.top=(d[k]?y(d[k]):padT+ih)/H*100+'%';tip.hidden=false};
   el.querySelectorAll('g.col').forEach(n=>{n.addEventListener('pointerenter',()=>show(n));n.addEventListener('focus',()=>show(n));n.addEventListener('pointerleave',()=>tip.hidden=true);n.addEventListener('blur',()=>tip.hidden=true)});
-  $('#daily-note').textContent=daily.reduce((a,d)=>a+d.questions,0)+' in total';
+  if(o.note)$(o.note).textContent=daily.reduce((a,d)=>a+d[k],0)+' in total';
 }
+
+/* website traffic from Google Analytics: totals, active users per day, where visitors are, and which sections they open.
+   The country filter narrows the cities and the sections. */
+const GA_CHART={el:'#ga-chart',tip:'#ga-tip',key:'users',unit:['active user','active users'],label:d=>d.sessions+' sessions'};
+let gaCountry='';
+const gaSection=t=>{const m=/·\s*(.+)$/.exec(t||'');if(!m)return t==='Ankur Ray Portfolio'?'Home (before section tracking)':t||'(not set)';
+  const k=decodeURIComponent(m[1]),names={home:'Home',pm:'Product career',founder:'Founder journey',timeline:'Career timeline',projects:'Projects',blogs:'Blogs',certs:'Certifications','design-system':'Design system'};
+  if(names[k])return names[k];const c=/^(case|project)\/(.+)$/.exec(k);
+  return c?(c[1]==='case'?'Case study: ':'Project: ')+c[2].replace(/-/g,' '):k};
+function gaRender(g,days){
+  const box=$('#ga');
+  if(!g||!g.connected){box.innerHTML='<div class="card ga-setup"><h2>Website traffic<small>Google Analytics is not connected yet</small></h2><p>Your site already sends visits to Google Analytics. To show them here, give this page read access once:</p><ol>'+
+    '<li>In <b>Google Cloud</b>, enable the <b>Google Analytics Data API</b> and create a <b>service account</b> with a <b>JSON key</b>.</li>'+
+    '<li>In <b>GA4 → Admin → Property access management</b>, add the service account’s email as a <b>Viewer</b>.</li>'+
+    '<li>In <b>Supabase → Edge Functions → Secrets</b>, add <code>GA4_PROPERTY_ID</code> (the number under GA4 → Admin → Property details) and <code>GA4_SERVICE_ACCOUNT</code> (the whole JSON key).</li></ol></div>';return}
+  if(g.error){box.innerHTML='<div class="card ga-setup"><h2>Website traffic<small>Google Analytics</small></h2><p class="err">Couldn’t read Google Analytics: '+esc(g.error)+'</p><p>Check that the service account is a Viewer on the property and the property id is right.</p></div>';return}
+  const countries=[...g.places.reduce((m,p)=>m.set(p.country,(m.get(p.country)||0)+p.users),new Map())].sort((a,b)=>b[1]-a[1]);
+  if(gaCountry&&!countries.some(c=>c[0]===gaCountry))gaCountry='';
+  const t=g.totals,cmax=Math.max(1,...countries.map(c=>c[1]));
+  const cities=g.places.filter(p=>!gaCountry||p.country===gaCountry).slice(0,15);
+  const sec=[...g.sections.filter(s=>!gaCountry||s.country===gaCountry).reduce((m,s)=>{const k=gaSection(s.title),v=m.get(k)||{name:k,views:0,users:0};v.views+=s.views;v.users+=s.users;return m.set(k,v)},new Map()).values()].sort((a,b)=>b.views-a.views).slice(0,15);
+  box.innerHTML='<div class="ga-head"><h2>Website traffic<small>from Google Analytics · last '+days+' days</small></h2>'+
+      '<label class="ga-filter"><span class="label">Country</span><select id="ga-country"><option value="">All countries</option>'+countries.map(c=>'<option'+(c[0]===gaCountry?' selected':'')+' value="'+esc(c[0])+'">'+esc(c[0])+' ('+c[1]+')</option>').join('')+'</select></label></div>'+
+    '<div class="grid kpis">'+[
+      ['Active now','<span class="live"><i></i>'+g.active_now+'</span>','in the last 30 minutes'],
+      ['Active users',t.active_users,'people who visited'],['Sessions',t.sessions,'visits in total'],['Page views',t.page_views,'sections opened'],['New users',t.new_users,'first-time visitors']
+    ].map(k=>'<div class="card kpi"><span class="label">'+k[0]+'</span><b>'+k[1]+'</b><small>'+k[2]+'</small></div>').join('')+'</div>'+
+    '<div class="grid two"><div class="card"><h2>Active users per day</h2><div class="chart" id="ga-chart"><div class="tip" id="ga-tip" hidden></div></div></div>'+
+      '<div class="card"><h2>Top countries<small>active users</small></h2>'+(countries.length?countries.slice(0,8).map(c=>'<button type="button" class="outcome ga-c'+(c[0]===gaCountry?' on':'')+'" data-country="'+esc(c[0])+'"><span>'+esc(c[0])+'</span><span class="track"><span class="fill" style="display:block;width:'+Math.max(3,c[1]/cmax*100)+'%;background:var(--bar)"></span></span><span class="v">'+c[1]+'</span></button>').join(''):'<p class="empty">No visits yet.</p>')+'</div></div>'+
+    '<div class="grid two"><div class="card"><h2>Top cities<small>'+(gaCountry?esc(gaCountry):'all countries')+'</small></h2>'+(cities.length?'<table><tr><th>City</th><th>Country</th><th class="n">Users</th><th class="n">Sessions</th></tr>'+cities.map(c=>'<tr><td>'+esc(c.city==='(not set)'?'Unknown':c.city)+'</td><td>'+esc(c.country)+'</td><td class="n">'+c.users+'</td><td class="n">'+c.sessions+'</td></tr>').join('')+'</table>':'<p class="empty">No visits yet.</p>')+'</div>'+
+      '<div class="card"><h2>Section visits<small>'+(gaCountry?esc(gaCountry):'all countries')+'</small></h2>'+(sec.length?'<table><tr><th>Section</th><th class="n">Views</th><th class="n">Users</th></tr>'+sec.map(s=>'<tr><td>'+esc(s.name)+'</td><td class="n">'+s.views+'</td><td class="n">'+s.users+'</td></tr>').join('')+'</table>':'<p class="empty">No page views yet.</p>')+'</div></div>';
+  if(g.daily.length)chart(g.daily,GA_CHART);
+}
+document.addEventListener('change',e=>{if(e.target.id==='ga-country'){gaCountry=e.target.value;if(last)gaRender(last.ga,last.days)}});
+document.addEventListener('click',e=>{const b=e.target.closest('.ga-c');if(b){gaCountry=gaCountry===b.dataset.country?'':b.dataset.country;if(last)gaRender(last.ga,last.days)}});
 
 $('#gate-form').addEventListener('submit',e=>{e.preventDefault();key=$('#key').value.trim();if(!key)return;store.set(key);$('#gate-err').textContent='';load()});
 document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{days=+b.dataset.days;try{localStorage.setItem('ak-insights-days',days)}catch(_){}load()}));
 $('#refresh').addEventListener('click',load);
 $('#lock').addEventListener('click',()=>{store.set('');key='';gate('Locked. The key is no longer saved on this device.')});
-let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(last&&!$('#app').hidden)chart(last.daily)},150)});
+let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(last&&!$('#app').hidden){chart(last.daily);if(last.ga&&last.ga.daily&&$('#ga-chart'))chart(last.ga.daily,GA_CHART)}},150)});
 setInterval(()=>{if(key&&!document.hidden&&!$('#app').hidden)load()},60000); // keeps itself fresh while open
 key?load():gate();
 </script>
