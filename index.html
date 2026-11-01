@@ -1704,14 +1704,9 @@ button.ak-entry:hover .ask-soon-cta svg{transform:translateX(3px)}
 @media (prefers-reduced-motion:reduce){.cs-pop,.cs-pop.on,.cs-pop.out{transform:none;filter:none;transition:opacity .3s}.cs-pop.on:before{animation:none}}
 @media print{.cs-pop{display:none!important}}
 
-/* profile card schools that open their certificate */
-.li-org-link{position:relative;display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0;border-radius:8px;color:inherit;text-decoration:none;transition:background-color .2s,box-shadow .2s}
-.li-org-link:hover,.li-org-link:focus-visible{background:var(--sunk);box-shadow:0 0 0 6px var(--sunk)}
-.li-org-link:focus-visible{outline:2px solid #4A93B2;outline-offset:1px}
-.li-org-go{position:absolute;right:0;bottom:0;padding:3px 0 3px 10px;background:linear-gradient(90deg,transparent,var(--sunk) 10px);font:500 10px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#2F6F8A;opacity:0;transform:translateX(-4px);transition:opacity .2s,transform .25s cubic-bezier(.2,.8,.2,1)}
-.li-org-link:hover .li-org-go,.li-org-link:focus-visible .li-org-go{opacity:1;transform:none}
-@media (hover:none){.li-org-go{display:none}}
-.li-org-link:hover .li-org-t>span:first-child{text-decoration:underline;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,#4A93B2 60%,transparent)}
+/* profile card schools that open their certificate: the link adds no box, so the row looks exactly as before */
+.li-org-link{display:contents;color:inherit;text-decoration:none}
+.li-orgs .has-cert{cursor:pointer}
 .cert{scroll-margin:90px}
 .cert.cert-hit{animation:cert-hit 2.4s cubic-bezier(.2,.8,.2,1)}
 @keyframes cert-hit{0%{box-shadow:0 0 0 0 color-mix(in srgb,#4A93B2 0%,transparent)}15%,55%{box-shadow:0 0 0 4px color-mix(in srgb,#4A93B2 45%,transparent),0 18px 40px -16px color-mix(in srgb,#7B6BB0 60%,transparent)}100%{box-shadow:0 0 0 0 transparent}}
@@ -1947,7 +1942,7 @@ function home(){
       '<p class="li-head">'+esc(p.liHeadline||p.headline)+'</p>'+
       '<p class="li-meta">'+esc(p.location||'')+(p.followers?' · <b>'+esc(p.followers)+'</b>':'')+'</p>'+
       '<ul class="li-orgs">'+lines(p.orgs).map((o,k)=>{const cert=/^logo-[a-z]+$/.test(o[2]||'')&&(state.pm.certs||[]).find(c=>c.image===o[2].replace(/^logo-/,'cert-'));
-        return '<li'+(cert?' class="has-cert"':'')+'>'+(cert?'<a class="li-org-link" href="#certs" data-cert-go="'+esc(cert.image)+'" aria-label="'+esc(o[0])+': view the certificate">':'')+(/^logo-[a-z]+$/.test(o[2]||'')?'<span class="li-logo img" style="background-image:var(--'+o[2]+')" role="img" aria-label="'+esc(o[0])+' logo"></span>':'<span class="li-logo '+tone(o[2]||k+1)+'">'+esc(o[0].split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase())+'</span>')+'<span class="li-org-t"><span>'+esc(o[0])+'</span>'+(o[1]?'<small>'+esc(o[1])+'</small>':'')+'</span>'+(cert?'<span class="li-org-go" aria-hidden="true">Certificate →</span></a>':'')+'</li>'}).join('')+'</ul>'+
+        return '<li'+(cert?' class="has-cert"':'')+'>'+(cert?'<a class="li-org-link" href="#certs" data-cert-go="'+esc(cert.image)+'" aria-label="'+esc(o[0])+': view the certificate">':'')+(/^logo-[a-z]+$/.test(o[2]||'')?'<span class="li-logo img" style="background-image:var(--'+o[2]+')" role="img" aria-label="'+esc(o[0])+' logo"></span>':'<span class="li-logo '+tone(o[2]||k+1)+'">'+esc(o[0].split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase())+'</span>')+'<span class="li-org-t"><span>'+esc(o[0])+'</span>'+(o[1]?'<small>'+esc(o[1])+'</small>':'')+'</span>'+(cert?'</a>':'')+'</li>'}).join('')+'</ul>'+
       (p.about?'<div class="li-about" data-more><p>'+esc(p.about)+'</p><button type="button" class="li-more" data-li-more>…see more</button></div>':'')+
       '<div class="me-actions">'+cvButton()+(url(p.github)?'<a class="me-gh" href="'+esc(url(p.github))+'" target="_blank" rel="noopener" aria-label="GitHub profile" title="GitHub · Ankurray1">'+GH_MARK+'GitHub</a>':'')+
         '<span class="li-peek" aria-hidden="true"><span class="li-peek-img"></span><span class="li-peek-cap"><b class="in-mark">in</b>A glimpse of my LinkedIn · select to open the full profile</span></span>'+'</div></div></aside></div>'+
