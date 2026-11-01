@@ -1584,7 +1584,17 @@ button.ak-entry .ask-soon-cta{display:inline-flex;align-items:center;gap:8px;hei
 button.ak-entry .ask-soon-cta svg{width:16px;height:16px;transition:transform .3s cubic-bezier(.2,.8,.2,1)!important}
 button.ak-entry:hover .ask-soon-cta svg{transform:translateX(3px)}
 .m-founder button.ak-entry .ask-soon-cta{background:linear-gradient(120deg,#4A93B2,#7B6BB0 55%,#C9667A)}
-@media (max-width:560px){button.ak-entry .ask-soon-cta{width:40px;height:40px;padding:0;justify-content:center}button.ak-entry .ask-soon-cta>span{display:none}button.ask.ai.ask-soon.ak-entry{gap:10px}}
+/* a quarter thinner: ~66px tall down to ~49px, everything scaled together */
+button.ask.ai.ask-soon.ak-entry{padding:6px 6px 6px 10px;gap:12px}
+button.ak-entry .ak-face-lg{--s:34px}
+button.ak-entry .ak-face-lg .ak-mesh{inset:-4px}
+button.ak-entry .ask-field{gap:2px}
+button.ak-entry .ask-soon-title{font-size:13.5px;line-height:1.2}
+button.ak-entry .ask-field>.ask-soon-copy{font-size:12.5px;line-height:1.25}
+button.ak-entry .ak-live{padding:2px 6px}
+button.ak-entry .ask-soon-cta{height:34px;padding:0 15px;font-size:13px}
+button.ak-entry .ask-soon-cta svg{width:15px;height:15px}
+@media (max-width:560px){button.ak-entry .ask-soon-cta{width:34px;height:34px;padding:0;justify-content:center}button.ak-entry .ask-soon-cta>span{display:none}button.ask.ai.ask-soon.ak-entry{gap:10px}}
 @media (prefers-reduced-motion:reduce){.ak-mesh,.ak-mesh:before,.ak-mesh:after,.ak-spark svg,.ask.ai.ask-soon.ak-entry .ak-mesh,.ask.ai.ask-soon.ak-entry .ak-mesh:before,.ask.ai.ask-soon.ak-entry .ak-mesh:after,button.ask.ai.ask-soon.ak-entry,button.ask.ai.ask-soon.ak-entry:before,button.ask.ai.ask-soon.ak-entry:after,button.ak-entry .ask-soon-cta{animation:none!important}}
 
 /* the "why" form after a thumbs up or down */
