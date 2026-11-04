@@ -1743,6 +1743,17 @@ button.ak-entry .ask-soon-cta svg{width:15px;height:15px}
 .ak-launch{bottom:calc(20px + var(--ak-lift,0px));transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,opacity .2s,padding .55s cubic-bezier(.2,.8,.2,1),gap .55s cubic-bezier(.2,.8,.2,1),bottom .45s cubic-bezier(.2,.8,.2,1)}
 .ak-hello{bottom:calc(82px + var(--ak-lift,0px))}
 @media (max-width:640px){.ak-launch{bottom:calc(14px + var(--ak-lift,0px))}.ak-hello{bottom:calc(74px + var(--ak-lift,0px))}}
+
+/* the hidden key under the Product / Founder switch */
+.sk-key{position:fixed;z-index:80;display:grid;place-items:center;width:38px;height:38px;border-radius:50%;color:#5A3E07;text-decoration:none;
+  background:radial-gradient(circle at 30% 25%,#FFF3CF,#E9C46A 55%,#B8892B);box-shadow:0 0 0 1px rgba(120,80,10,.35),0 10px 24px -10px rgba(120,80,10,.7),0 0 22px -4px rgba(233,196,106,.8);
+  opacity:0;transform:translateX(-14px) rotate(-90deg) scale(.7);transition:opacity .35s ease,transform .6s cubic-bezier(.16,1,.3,1)}
+.sk-key[hidden]{display:none}
+.sk-key.on{opacity:1;transform:translateX(26px) rotate(0) scale(1)}
+.sk-key svg{width:20px;height:20px}
+.sk-key:hover{box-shadow:0 0 0 1px rgba(120,80,10,.45),0 12px 28px -10px rgba(120,80,10,.8),0 0 30px -2px rgba(233,196,106,.95)}
+.sk-key:focus-visible{outline:2px solid #B8892B;outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.sk-key,.sk-key.on{transition:opacity .2s;transform:translateX(26px)}}
 </style><div id="root"><div id="view"></div><aside id="harness" hidden aria-label="Harness"></aside><dialog id="detail"></dialog><button id="hdot" hidden aria-label="Open harness" title="Harness"></button></div><style id="eval-dataset-style">
 /* Give the evaluation case study a four-cell feature footprint in the existing desktop bento. */
 @media(min-width:981px){.grid.bento{grid-template-columns:repeat(12,minmax(0,1fr));grid-template-areas:'a a a a a a a b b c c c' 'e e e e e e e b b c c c' 'g g g g f f f d d h h h';align-items:stretch}.grid.bento [data-slot=a] .photo{aspect-ratio:auto;min-height:240px}.grid.bento [data-slot=e] .photo{aspect-ratio:auto;min-height:270px;padding:18px;gap:8px}.grid.bento [data-slot=b] .photo,.grid.bento [data-slot=c] .photo{aspect-ratio:auto;min-height:380px}.grid.bento [data-slot=d] .photo,.grid.bento [data-slot=f] .photo{aspect-ratio:16/10}.grid.bento [data-slot=g] .photo{aspect-ratio:auto;min-height:180px}.grid.bento [data-slot=e] .cs-face .big{font-size:clamp(34px,3vw,48px)!important}.grid.bento [data-slot=e] h3{font-size:clamp(22px,2.2vw,30px);line-height:1.15}.grid.bento [data-slot=e] .sum{display:block;font-size:15px;line-height:1.55}.grid.bento [data-slot=e] .cf-label{font-size:15px}.grid.bento [data-slot=e] .cf-keys span{font-size:12px;padding:7px 10px}.grid.bento [data-slot=e] .cf-eval-viz{min-height:86px;gap:6px;padding:8px;margin-top:6px}}
@@ -3494,6 +3505,32 @@ addEventListener('keydown',e=>{
     const a=f[0],z=f[f.length-1];if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}
 });
 askMount();
+/* the owner's way in: hold the pointer on the Product tab for 5 seconds and a key slides out to the right, under the
+   switch; it opens the insights login. Nothing hints at it, and it slides away again if it isn't used. */
+let skTimer=0,skHide=0;
+const SK_KEY='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12.2 12H21M17.5 12v3.2M20.5 12v2.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+function skShow(tab){
+  let k=$('.sk-key');
+  if(!k){document.body.insertAdjacentHTML('beforeend','<a class="sk-key" href="insights.html" aria-label="Insights" title="Insights" hidden>'+SK_KEY+'</a>');k=$('.sk-key')}
+  const r=tab.getBoundingClientRect();
+  k.style.left=Math.round(r.left)+'px';k.style.top=Math.round(r.bottom+10)+'px';
+  k.hidden=false;k.classList.remove('on');k.offsetWidth;k.classList.add('on');
+  clearTimeout(skHide);skHide=setTimeout(skAway,8000);
+}
+function skAway(){const k=$('.sk-key');if(!k||k.hidden)return;k.classList.remove('on');setTimeout(()=>{if(!k.classList.contains('on'))k.hidden=true},450)}
+document.addEventListener('pointerover',e=>{
+  if(e.pointerType&&e.pointerType!=='mouse')return;
+  const t=e.target.closest&&e.target.closest('nav.mode a[href="#pm"]');if(!t||skTimer)return;
+  skTimer=setTimeout(()=>{skTimer=0;skShow(t)},5000);
+});
+document.addEventListener('pointerout',e=>{
+  const t=e.target.closest&&e.target.closest('nav.mode a[href="#pm"]');if(!t||t.contains(e.relatedTarget))return;
+  clearTimeout(skTimer);skTimer=0;
+});
+document.addEventListener('pointerover',e=>{if(e.target.closest&&e.target.closest('.sk-key'))clearTimeout(skHide)});
+document.addEventListener('pointerout',e=>{if(e.target.closest&&e.target.closest('.sk-key')&&!e.target.closest('.sk-key').contains(e.relatedTarget))skHide=setTimeout(skAway,2500)});
+addEventListener('scroll',()=>{if($('.sk-key.on'))skAway()},{passive:true});
+addEventListener('hashchange',skAway);
 /* hosts can pin their own badge to the bottom-right corner (Netlify's free plan does); the launcher measures it
    and sits just above it, and drops back to the corner on hosts without one */
 function akLift(){
