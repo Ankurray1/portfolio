@@ -99,6 +99,23 @@ button.ga-c:focus-visible{outline:2px solid var(--bar)}
 .gate button{font:600 14px var(--display);padding:11px;border:0;border-radius:10px;cursor:pointer;color:#fff;background:linear-gradient(120deg,#4A93B2,#7B6BB0 55%,#C9667A)}
 .err{color:var(--crit);font-size:13px;min-height:1.2em;margin:0}
 .loading{opacity:.55;transition:opacity .2s}
+.btn[aria-pressed="true"]{background:var(--ink);color:var(--surface);box-shadow:none}
+.btn[aria-pressed="true"]:hover{background:var(--ink)}
+.btn svg{width:14px;height:14px}
+.ga-tools{display:flex;flex-wrap:wrap;align-items:end;gap:10px}
+.ga-filter input{font:inherit;font-size:13px;padding:6px 10px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.ga-note{font-size:12.5px;color:var(--muted);margin:-4px 0 0}
+#ga-chart g.col{cursor:pointer}
+#ga-chart g.col.picked .b{fill:var(--ink)}
+.day{display:grid;gap:12px;margin-bottom:12px;padding:16px;border-radius:18px;background:var(--sunk);box-shadow:inset 0 0 0 1px var(--line)}
+.day-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.day-head h2{margin:0;font-size:17px}
+.day .kpis{margin:0}
+.day .two{margin:0}
+.day .three{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.day td.dim{color:var(--muted)}
+.day .hint{margin:8px 0 0;font-size:12px;color:var(--muted)}
+.day .chart{height:150px}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -117,6 +134,7 @@ button.ga-c:focus-visible{outline:2px solid var(--bar)}
     <header>
       <div class="brand"><span class="mark"><i>A</i></span><div><h1>Ask Ankur Insights</h1><p class="sub">What recruiters ask on your portfolio, and how well it answers.</p></div></div>
       <div class="seg" role="group" aria-label="Date range"><button data-days="7">7 days</button><button data-days="30">30 days</button><button data-days="90">90 days</button></div>
+      <button class="btn" id="bots" type="button" aria-pressed="true" title="Leave out visits from US data centres (link scanners and crawlers)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Hide likely bots</button>
       <button class="btn" id="refresh" type="button">Refresh</button>
       <button class="btn" id="lock" type="button" title="Forget the key on this device">Lock</button>
       <span class="updated" id="updated"></span>
@@ -125,6 +143,8 @@ button.ga-c:focus-visible{outline:2px solid var(--bar)}
     <section class="grid kpis" id="kpis"></section>
 
     <section id="ga" class="ga"></section>
+
+    <section id="day" class="day" hidden aria-live="polite"></section>
 
     <section class="grid two">
       <div class="card"><h2>Questions per day<small id="daily-note"></small></h2><div class="chart" id="chart"><div class="tip" id="tip" hidden></div></div>
@@ -149,7 +169,8 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const store={get(){try{return localStorage.getItem('ak-insights-key')||''}catch(_){return ''}},set(v){try{v?localStorage.setItem('ak-insights-key',v):localStorage.removeItem('ak-insights-key')}catch(_){}}};
 let key=store.get(),days=30,last=null;
-try{days=+localStorage.getItem('ak-insights-days')||30}catch(_){}
+let human=true,dayOpen='';
+try{days=+localStorage.getItem('ak-insights-days')||30;human=localStorage.getItem('ak-insights-human')!=='0'}catch(_){}
 /* each outcome keeps one meaning and one colour; the label always travels with it */
 const OUT={answered:['Answered','var(--good)'],declined:['Not on the site','var(--neutral)'],no_match:['Off-topic','var(--neutral)'],policy:['Salary / notice','var(--neutral)'],
   unverified:['Held back (unverified)','var(--warn)'],retrieval_only:['Showed sources only','var(--serious)'],rate_limited:['Rate limited','var(--serious)'],error:['Error / stopped','var(--crit)']};
@@ -162,15 +183,17 @@ const pct=(a,b)=>b?Math.round(a/b*100)+'%':'—';
 async function load(){
   $('#app').classList.add('loading');
   let j=null,status=0;
-  try{const r=await fetch(URL_,{method:'POST',headers:{'Content-Type':'application/json','x-insights-key':key},body:JSON.stringify({days})});status=r.status;j=await r.json()}catch(_){}
+  try{const r=await fetch(URL_,{method:'POST',headers:{'Content-Type':'application/json','x-insights-key':key},body:JSON.stringify({days,human})});status=r.status;j=await r.json()}catch(_){}
   $('#app').classList.remove('loading');
   if(!j||j.error){ if(status===401||status===429){store.set('');key='';gate(j&&j.error)} else $('#updated').textContent='Could not load. Try Refresh.'; return }
   $('#gate').hidden=true;$('#app').hidden=false;last=j;render(j);
+  if(dayOpen)openDay(dayOpen,true);
 }
 function gate(msg){$('#app').hidden=true;$('#gate').hidden=false;$('#gate-err').textContent=msg||'';$('#key').focus()}
 
 function render(j){
   document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.days===j.days)));
+  $('#bots').setAttribute('aria-pressed',String(human));
   $('#updated').textContent='Updated '+new Date().toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
   const s=j.summary,votes=s.thumbs_up+s.thumbs_down;
   $('#kpis').innerHTML=[
@@ -201,7 +224,7 @@ function render(j){
    o: {el, tip, key, label(d) → aria/tooltip second line, unit} */
 function chart(daily,o){
   o=o||{el:'#chart',tip:'#tip',key:'questions',unit:['question','questions'],label:d=>d.answered+' answered',note:'#daily-note'};
-  const el=$(o.el),tip=$(o.tip),k=o.key,W=el.clientWidth||600,H=200,padL=28,padB=22,padT=8,iw=W-padL,ih=H-padB-padT;
+  const el=$(o.el),tip=$(o.tip),k=o.key,W=el.clientWidth||600,H=el.clientHeight||200,padL=28,padB=22,padT=8,iw=W-padL,ih=H-padB-padT;
   const max=Math.max(1,...daily.map(d=>d[k])),step=max<=4?1:Math.ceil(max/4),top=Math.ceil(max/step)*step;
   const bw=iw/Math.max(1,daily.length),gap=Math.min(2,bw*.25),y=v=>padT+ih-(v/top)*ih,unit=n=>n+' '+o.unit[n===1?0:1];
   let g='';
@@ -211,19 +234,21 @@ function chart(daily,o){
     g+='<g class="col" tabindex="0" data-i="'+i+'" aria-label="'+esc(d.day)+': '+esc(unit(d[k]))+', '+esc(o.label(d))+'">'+
       (d[k]?'<path class="b" d="M'+(x+gap/2)+','+(padT+ih)+'V'+(y(d[k])+r)+'q0,-'+r+' '+r+',-'+r+'H'+(x+bw-gap/2-r)+'q'+r+',0 '+r+','+r+'V'+(padT+ih)+'Z" fill="var(--bar)"/>':'')+
       '<rect class="hit" x="'+x+'" y="'+padT+'" width="'+bw+'" height="'+ih+'"/></g>';
-    if(i%every===0)g+='<text class="axis" x="'+(x+bw/2)+'" y="'+(H-6)+'" text-anchor="middle">'+esc(new Date(d.day+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'}))+'</text>'});
+    if(i%every===0)g+='<text class="axis" x="'+(x+bw/2)+'" y="'+(H-6)+'" text-anchor="middle">'+esc(o.x?o.x(d):new Date(d.day+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'}))+'</text>'});
   el.querySelector('svg')?.remove();
   el.insertAdjacentHTML('afterbegin','<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(o.unit[1])+' per day">'+g+'</svg>');
   const show=n=>{const i=+n.dataset.i,d=daily[i];tip.innerHTML='';const b=document.createElement('b');b.textContent=unit(d[k]);const sp=document.createElement('span');
-    sp.textContent=new Date(d.day+'T00:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})+' · '+o.label(d);tip.append(b,sp);
+    sp.textContent=(o.x?o.x(d):new Date(d.day+'T00:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}))+' · '+o.label(d);tip.append(b,sp);
     tip.style.left=(padL+i*bw+bw/2)/W*100+'%';tip.style.top=(d[k]?y(d[k]):padT+ih)/H*100+'%';tip.hidden=false};
-  el.querySelectorAll('g.col').forEach(n=>{n.addEventListener('pointerenter',()=>show(n));n.addEventListener('focus',()=>show(n));n.addEventListener('pointerleave',()=>tip.hidden=true);n.addEventListener('blur',()=>tip.hidden=true)});
+  el.querySelectorAll('g.col').forEach(n=>{n.addEventListener('pointerenter',()=>show(n));n.addEventListener('focus',()=>show(n));n.addEventListener('pointerleave',()=>tip.hidden=true);n.addEventListener('blur',()=>tip.hidden=true);
+    if(o.pick){n.classList.toggle('picked',daily[+n.dataset.i].day===dayOpen);n.setAttribute('role','button');
+      n.addEventListener('click',()=>o.pick(daily[+n.dataset.i]));n.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();o.pick(daily[+n.dataset.i])}})}});
   if(o.note)$(o.note).textContent=daily.reduce((a,d)=>a+d[k],0)+' in total';
 }
 
 /* website traffic from Google Analytics: totals, active users per day, where visitors are, and which sections they open.
    The country filter narrows the cities and the sections. */
-const GA_CHART={el:'#ga-chart',tip:'#ga-tip',key:'users',unit:['active user','active users'],label:d=>d.sessions+' sessions'};
+const GA_CHART={el:'#ga-chart',tip:'#ga-tip',key:'users',unit:['active user','active users'],label:d=>d.sessions+' sessions · click for the day',pick:d=>openDay(d.day)};
 let gaCountry='';
 const gaSection=t=>{const m=/·\s*(.+)$/.exec(t||'');if(!m)return t==='Ankur Ray Portfolio'?'Home (before section tracking)':t||'(not set)';
   const k=decodeURIComponent(m[1]),names={home:'Home',pm:'Product career',founder:'Founder journey',timeline:'Career timeline',projects:'Projects',blogs:'Blogs',certs:'Certifications','design-system':'Design system'};
@@ -241,8 +266,11 @@ function gaRender(g,days){
   const t=g.totals,cmax=Math.max(1,...countries.map(c=>c[1]));
   const cities=g.places.filter(p=>!gaCountry||p.country===gaCountry).slice(0,15);
   const sec=[...g.sections.filter(s=>!gaCountry||s.country===gaCountry).reduce((m,s)=>{const k=gaSection(s.title),v=m.get(k)||{name:k,views:0,users:0};v.views+=s.views;v.users+=s.users;return m.set(k,v)},new Map()).values()].sort((a,b)=>b.views-a.views).slice(0,15);
-  box.innerHTML='<div class="ga-head"><h2>Website traffic<small>from Google Analytics · last '+days+' days</small></h2>'+
-      '<label class="ga-filter"><span class="label">Country</span><select id="ga-country"><option value="">All countries</option>'+countries.map(c=>'<option'+(c[0]===gaCountry?' selected':'')+' value="'+esc(c[0])+'">'+esc(c[0])+' ('+c[1]+')</option>').join('')+'</select></label></div>'+
+  const today=new Date().toISOString().slice(0,10);
+  box.innerHTML='<div class="ga-head"><h2>Website traffic<small>from Google Analytics · last '+days+' days</small></h2><div class="ga-tools">'+
+      '<label class="ga-filter"><span class="label">Open a day</span><input type="date" id="ga-day" max="'+today+'" min="2026-10-01" value="'+esc(dayOpen)+'"></label>'+
+      '<label class="ga-filter"><span class="label">Country</span><select id="ga-country"><option value="">All countries</option>'+countries.map(c=>'<option'+(c[0]===gaCountry?' selected':'')+' value="'+esc(c[0])+'">'+esc(c[0])+' ('+c[1]+')</option>').join('')+'</select></label></div></div>'+
+    '<p class="ga-note">'+(g.human?(g.bots_hidden?g.bots_hidden+' likely bot'+(g.bots_hidden===1?'':'s')+' hidden (visits from US data centres). ':'No likely bots in this range. '):'Showing everyone, bots included. ')+'Click a day in the chart to see it in detail.</p>'+
     '<div class="grid kpis">'+[
       ['Active now','<span class="live"><i></i>'+g.active_now+'</span>','in the last 30 minutes'],
       ['Active users',t.active_users,'people who visited'],['Sessions',t.sessions,'visits in total'],['Page views',t.page_views,'sections opened'],['New users',t.new_users,'first-time visitors']
@@ -253,14 +281,64 @@ function gaRender(g,days){
       '<div class="card"><h2>Section visits<small>'+(gaCountry?esc(gaCountry):'all countries')+'</small></h2>'+(sec.length?'<table><tr><th>Section</th><th class="n">Views</th><th class="n">Users</th></tr>'+sec.map(s=>'<tr><td>'+esc(s.name)+'</td><td class="n">'+s.views+'</td><td class="n">'+s.users+'</td></tr>').join('')+'</table>':'<p class="empty">No page views yet.</p>')+'</div></div>';
   if(g.daily.length)chart(g.daily,GA_CHART);
 }
+
+/* one day in detail: GA4's aggregate breakdowns plus the site's own log (Ask questions, CV requests) for that day */
+const fmtDay=d=>new Date(d+'T00:00:00').toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric',year:'numeric'});
+const mins=s=>!s?'0s':s<60?Math.round(s)+'s':Math.floor(s/60)+'m '+String(Math.round(s%60)).padStart(2,'0')+'s';
+const unk=v=>!v||v==='(not set)'?'Unknown':v;
+const tbl=(head,rows,empty)=>rows.length?'<table><tr>'+head.map(h=>'<th'+(h[1]?' class="n"':'')+'>'+h[0]+'</th>').join('')+'</tr>'+rows.map(r=>'<tr>'+r.map((c,i)=>'<td'+(head[i][1]?' class="n"':'')+'>'+c+'</td>').join('')+'</tr>').join('')+'</table>':'<p class="empty">'+(empty||'Nothing recorded.')+'</p>';
+let dayReq=0;
+async function openDay(day,quiet){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(day||''))return;
+  dayOpen=day;const box=$('#day'),me=++dayReq;box.hidden=false;
+  if(last&&last.ga&&last.ga.daily&&$('#ga-chart'))chart(last.ga.daily,GA_CHART);
+  if($('#ga-day'))$('#ga-day').value=day;
+  if(!quiet){box.innerHTML='<div class="day-head"><h2>'+esc(fmtDay(day))+'</h2></div><p class="empty">Loading the day…</p>';box.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'})}
+  let j=null;try{const r=await fetch(URL_,{method:'POST',headers:{'Content-Type':'application/json','x-insights-key':key},body:JSON.stringify({day,human})});j=await r.json()}catch(_){}
+  if(me!==dayReq)return;
+  if(!j||j.error||!j.ga_day){box.innerHTML='<div class="day-head"><h2>'+esc(fmtDay(day))+'</h2><button class="btn" type="button" data-day-close>Close</button></div><p class="err">Couldn’t load this day'+(j&&j.error?': '+esc(j.error):'')+'.</p>';return}
+  const g=j.ga_day,head='<div class="day-head"><h2>'+esc(fmtDay(day))+'<small>'+(g.human?(g.bots_hidden?g.bots_hidden+' likely bot'+(g.bots_hidden===1?'':'s')+' hidden':'no likely bots'):'bots included')+'</small></h2><button class="btn" type="button" data-day-close>Close</button></div>';
+  const asks=j.asks||[],cvs=j.cv_requests||[];
+  const site='<div class="grid two"><div class="card"><h2>Ask Ankur that day<small>'+asks.length+' question'+(asks.length===1?'':'s')+'</small></h2>'+
+      tbl([['Time'],['Question'],['Outcome']],asks.map(a=>['<span style="white-space:nowrap;color:var(--muted)">'+esc(new Date(a.created_at).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}))+'</span>',esc(a.question)+(a.has_jd?' <span class="pill">job description</span>':'')+(a.feedback===1?' 👍':a.feedback===-1?' 👎':''),pill(a.status)]),'No questions asked this day.')+'</div>'+
+    '<div class="card"><h2>CV requests<small>'+cvs.length+'</small></h2>'+tbl([['Time'],['Email']],cvs.map(c=>['<span style="color:var(--muted)">'+esc(new Date(c.requested_at).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}))+'</span>',esc(c.email)]),'No CV requests this day.')+'</div></div>';
+  if(!g.connected||g.error){box.innerHTML=head+'<p class="err">'+(g.error?'Couldn’t read Google Analytics: '+esc(g.error):'Google Analytics is not connected.')+'</p>'+site;return}
+  const t=(g.totals||[])[0]||{},v=Object.fromEntries((g.visitors||[]).map(x=>[x.newVsReturning,x]));
+  const kpis=[['Active users',t.activeUsers||0,(v.new?v.new.activeUsers:0)+' new · '+(v.returning?v.returning.activeUsers:0)+' returning'],
+    ['Sessions',t.sessions||0,(t.engagedSessions||0)+' engaged ('+Math.round((t.engagementRate||0)*100)+'%)'],
+    ['Page views',t.screenPageViews||0,'sections opened'],
+    ['Time engaged',mins(t.activeUsers?(t.userEngagementDuration||0)/t.activeUsers:0),'per user, on average'],
+    ['Events',t.eventCount||0,'clicks, scrolls, views']];
+  const byHour=Object.fromEntries((g.hours||[]).map(h=>[+h.hour,h]));
+  const hours=Array.from({length:24},(_,h)=>({day:day,hour:h,users:byHour[h]?byHour[h].activeUsers:0,sessions:byHour[h]?byHour[h].sessions:0}));
+  const pages=[...(g.pages||[]).reduce((m,p)=>{const k=gaSection(p.pageTitle),x=m.get(k)||{name:k,views:0,users:0};x.views+=p.screenPageViews;x.users=Math.max(x.users,p.activeUsers);return m.set(k,x)},new Map()).values()].sort((a,b)=>b.views-a.views);
+  box.innerHTML=head+
+    '<div class="grid kpis">'+kpis.map(k=>'<div class="card kpi"><span class="label">'+k[0]+'</span><b>'+esc(k[1])+'</b><small>'+esc(k[2])+'</small></div>').join('')+'</div>'+
+    '<div class="grid two"><div class="card"><h2>When they came<small>active users by hour, property time</small></h2><div class="chart" id="day-chart"><div class="tip" id="day-tip" hidden></div></div></div>'+
+      '<div class="card"><h2>Where from<small>city · region · country</small></h2>'+tbl([['Place'],['Users',1],['Sessions',1]],(g.places||[]).slice(0,12).map(p=>[esc(unk(p.city))+'<span style="color:var(--muted)"> · '+esc(unk(p.region))+' · '+esc(p.country)+'</span>',p.activeUsers,p.sessions]))+
+      '<p class="hint">One person on mobile data can appear in several cities, so these rows can add up to more than the active users.</p></div></div>'+
+    '<div class="grid three">'+
+      '<div class="card"><h2>Devices</h2>'+tbl([['Device'],['Users',1]],(g.devices||[]).slice(0,8).map(d=>[esc(d.deviceCategory)+'<span style="color:var(--muted)"> · '+esc(d.operatingSystem)+' · '+esc(d.browser)+'</span>',d.activeUsers]))+'</div>'+
+      '<div class="card"><h2>How they arrived</h2>'+tbl([['Source'],['Sessions',1],['Engaged',1]],(g.sources||[]).slice(0,8).map(x=>[esc(x.sessionSource==='(direct)'?'Direct (typed or shared link)':x.sessionSource)+'<span style="color:var(--muted)"> · '+esc(x.sessionMedium)+'</span>',x.sessions,x.engagedSessions]))+'</div>'+
+      '<div class="card"><h2>Sections opened</h2>'+tbl([['Section'],['Views',1]],pages.slice(0,10).map(x=>[esc(x.name),x.views]))+'</div>'+
+      '<div class="card"><h2>What they did<small>events</small></h2>'+tbl([['Event'],['Count',1],['Users',1]],(g.events||[]).slice(0,12).map(e=>[esc(e.eventName),e.eventCount,e.totalUsers]))+'</div>'+
+      '<div class="card"><h2>Landing page</h2>'+tbl([['Page'],['Sessions',1]],(g.landing||[]).slice(0,8).map(x=>[esc(x.landingPage==='(not set)'?'Unknown':x.landingPage),x.sessions]))+'</div>'+
+      '<div class="card"><h2>Language</h2>'+tbl([['Language'],['Users',1]],(g.languages||[]).slice(0,8).map(x=>[esc(x.language),x.activeUsers]))+'</div>'+
+    '</div>'+site;
+  chart(hours,{el:'#day-chart',tip:'#day-tip',key:'users',unit:['active user','active users'],label:d=>d.sessions+' sessions',x:d=>String(d.hour).padStart(2,'0')+':00'});
+}
+function closeDay(){dayOpen='';dayReq++;$('#day').hidden=true;if($('#ga-day'))$('#ga-day').value='';if(last&&last.ga&&last.ga.daily&&$('#ga-chart'))chart(last.ga.daily,GA_CHART)}
+document.addEventListener('click',e=>{if(e.target.closest('[data-day-close]'))closeDay()});
+document.addEventListener('change',e=>{if(e.target.id==='ga-day'){e.target.value?openDay(e.target.value):closeDay()}});
 document.addEventListener('change',e=>{if(e.target.id==='ga-country'){gaCountry=e.target.value;if(last)gaRender(last.ga,last.days)}});
 document.addEventListener('click',e=>{const b=e.target.closest('.ga-c');if(b){gaCountry=gaCountry===b.dataset.country?'':b.dataset.country;if(last)gaRender(last.ga,last.days)}});
 
 $('#gate-form').addEventListener('submit',e=>{e.preventDefault();key=$('#key').value.trim();if(!key)return;store.set(key);$('#gate-err').textContent='';load()});
 document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{days=+b.dataset.days;try{localStorage.setItem('ak-insights-days',days)}catch(_){}load()}));
 $('#refresh').addEventListener('click',load);
+$('#bots').addEventListener('click',()=>{human=!human;try{localStorage.setItem('ak-insights-human',human?'1':'0')}catch(_){}$('#bots').setAttribute('aria-pressed',String(human));load()});
 $('#lock').addEventListener('click',()=>{store.set('');key='';gate('Locked. The key is no longer saved on this device.')});
-let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(last&&!$('#app').hidden){chart(last.daily);if(last.ga&&last.ga.daily&&$('#ga-chart'))chart(last.ga.daily,GA_CHART)}},150)});
+let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(last&&!$('#app').hidden){chart(last.daily);if(last.ga&&last.ga.daily&&$('#ga-chart'))chart(last.ga.daily,GA_CHART);if(dayOpen&&$('#day-chart'))openDay(dayOpen,true)}},150)});
 setInterval(()=>{if(key&&!document.hidden&&!$('#app').hidden)load()},60000); // keeps itself fresh while open
 key?load():gate();
 </script>

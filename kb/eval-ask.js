@@ -27,7 +27,7 @@ const DECLINE = /isn't covered|not covered|can only answer|only answer questions
   let pass = 0;
   for (const c of CASES) {
     const t0 = Date.now();
-    const r = await fetch(URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: c.q }) });
+    const r = await fetch(URL, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:8000' }, body: JSON.stringify({ question: c.q }) });
     const j = await r.json().catch(() => ({}));
     const ms = Date.now() - t0, a = j.answer || '';
     const refused = ['no_match', 'policy', 'declined'].includes(j.status) || DECLINE.test(a);

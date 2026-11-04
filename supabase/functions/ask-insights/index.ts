@@ -1,5 +1,5 @@
 // Ask Ankur insights · the numbers behind the site assistant, for Ankur only.
-// POST {"days": 7 | 30 | 90} (or {"day": "YYYY-MM-DD"} for one day in detail) with header x-insights-key → summary, daily counts, outcomes, top questions,
+// POST {"days": 7 | 30 | 90, "human"?: boolean} (or {"day": "YYYY-MM-DD"} for one day in detail) with header x-insights-key → summary, daily counts, outcomes, top questions,
 // feedback (votes with their reasons and notes) and recent questions. The key is checked against SHA-256 hashes in public.insights_keys.
 // Website traffic comes from the GA4 Data API when the secrets GA4_PROPERTY_ID (the numeric property id) and
 // GA4_SERVICE_ACCOUNT (a service account's JSON key, added to the property as a Viewer) are set; otherwise ga.connected is false.
@@ -42,9 +42,16 @@ async function gaAccessToken(sa: { client_email: string; private_key: string }) 
   gaToken = { value: j.access_token, exp: Date.now() + (j.expires_in - 120) * 1000 };
   return gaToken.value;
 }
+/* likely bots: visits from US data-centre locations, where link scanners and crawlers run (e.g. mail security
+   opening shared links from cloud regions). Real visitors from these towns are rare enough to drop. */
+const BOT_CITIES = ['(not set)', 'Ashburn', 'Boardman', 'Council Bluffs', 'Des Moines', 'Flint Hill', 'The Dalles', 'Quincy', 'Moses Lake', 'Sterling', 'Leesburg'];
+const humanFilter = { notExpression: { andGroup: { expressions: [
+  { filter: { fieldName: 'country', stringFilter: { value: 'United States' } } },
+  { filter: { fieldName: 'city', inListFilter: { values: BOT_CITIES } } },
+] } } };
 type GaRow = { dimensionValues?: { value: string }[]; metricValues?: { value: string }[] };
 const gaRows = (rep: { rows?: GaRow[] } | undefined) => (rep?.rows ?? []).map((r) => ({ d: (r.dimensionValues ?? []).map((x) => x.value), m: (r.metricValues ?? []).map((x) => Number(x.value)) }));
-async function gaTraffic(days: number) {
+async function gaTraffic(days: number, human: boolean) {
   const property = Deno.env.get('GA4_PROPERTY_ID'), saJson = Deno.env.get('GA4_SERVICE_ACCOUNT');
   if (!property || !saJson) return { connected: false };
   try {
@@ -52,24 +59,30 @@ async function gaTraffic(days: number) {
     const api = (path: string, body: unknown) => fetch(`https://analyticsdata.googleapis.com/v1beta/properties/${property}:${path}`, {
       method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(9000) });
     const range = [{ startDate: `${days - 1}daysAgo`, endDate: 'today' }];
+    const f = human ? { dimensionFilter: humanFilter } : {};
     const m = (...names: string[]) => names.map((name) => ({ name }));
     const d = (...names: string[]) => names.map((name) => ({ name }));
     const [batch, live] = await Promise.all([
       api('batchRunReports', { requests: [
-        { dateRanges: range, metrics: m('activeUsers', 'sessions', 'screenPageViews', 'newUsers') },
-        { dateRanges: range, dimensions: d('date'), metrics: m('activeUsers', 'sessions'), orderBys: [{ dimension: { dimensionName: 'date' } }] },
-        { dateRanges: range, dimensions: d('country', 'city'), metrics: m('activeUsers', 'sessions'), orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }], limit: 250 },
+        { ...f, dateRanges: range, metrics: m('activeUsers', 'sessions', 'screenPageViews', 'newUsers') },
+        { ...f, dateRanges: range, dimensions: d('date'), metrics: m('activeUsers', 'sessions'), orderBys: [{ dimension: { dimensionName: 'date' } }] },
+        { ...f, dateRanges: range, dimensions: d('country', 'city'), metrics: m('activeUsers', 'sessions'), orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }], limit: 250 },
         // each portfolio section is sent as its own page_view titled "Ankur Ray · <section>"; split by country for the filter
-        { dateRanges: range, dimensions: d('pageTitle', 'country'), metrics: m('screenPageViews', 'activeUsers'), orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }], limit: 1000 },
+        { ...f, dateRanges: range, dimensions: d('pageTitle', 'country'), metrics: m('screenPageViews', 'activeUsers'), orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }], limit: 1000 },
+        // everyone, bots included, so the dashboard can say how many the filter left out
+        { dateRanges: range, metrics: m('activeUsers') },
       ] }),
-      api('runRealtimeReport', { metrics: m('activeUsers') }),
+      api('runRealtimeReport', { ...f, metrics: m('activeUsers') }),
     ]);
     const bj = await batch.json(), lj = await live.json().catch(() => ({}));
     if (!batch.ok) return { connected: true, error: bj.error?.message ?? 'Google Analytics request failed.' };
-    const [tot, daily, places, sections] = (bj.reports ?? []).map(gaRows);
+    const [tot, daily, places, sections, everyone] = (bj.reports ?? []).map(gaRows);
     const t = tot?.[0]?.m ?? [0, 0, 0, 0];
+    const all = everyone?.[0]?.m[0] ?? t[0];
     return {
       connected: true,
+      human,
+      bots_hidden: human ? Math.max(0, all - t[0]) : 0,
       active_now: gaRows(lj).reduce((a, r) => a + (r.m[0] || 0), 0),
       totals: { active_users: t[0], sessions: t[1], page_views: t[2], new_users: t[3] },
       daily: (daily ?? []).map((r) => ({ day: `${r.d[0].slice(0, 4)}-${r.d[0].slice(4, 6)}-${r.d[0].slice(6)}`, users: r.m[0], sessions: r.m[1] })),
@@ -82,15 +95,16 @@ async function gaTraffic(days: number) {
 }
 
 /* one day in detail: who came (in aggregate), from where, on what, and what they did. GA4 never identifies a person. */
-async function gaDay(day: string) {
+async function gaDay(day: string, human: boolean) {
   const property = Deno.env.get('GA4_PROPERTY_ID'), saJson = Deno.env.get('GA4_SERVICE_ACCOUNT');
   if (!property || !saJson) return { connected: false };
   try {
     const token = await gaAccessToken(JSON.parse(saJson));
     const range = [{ startDate: day, endDate: day }];
-    const q = (dims: string[], mets: string[], limit = 50) => ({ dateRanges: range, dimensions: dims.map((name) => ({ name })), metrics: mets.map((name) => ({ name })), limit, orderBys: [{ metric: { metricName: mets[0] }, desc: true }] });
+    const f = human ? { dimensionFilter: humanFilter } : {};
+    const q = (dims: string[], mets: string[], limit = 50) => ({ ...f, dateRanges: range, dimensions: dims.map((name) => ({ name })), metrics: mets.map((name) => ({ name })), limit, orderBys: [{ metric: { metricName: mets[0] }, desc: true }] });
     const reports: [string, ReturnType<typeof q>][] = [
-      ['totals', { dateRanges: range, dimensions: [], metrics: ['activeUsers', 'newUsers', 'sessions', 'engagedSessions', 'engagementRate', 'screenPageViews', 'averageSessionDuration', 'userEngagementDuration', 'eventCount'].map((name) => ({ name })), limit: 1, orderBys: [] } as ReturnType<typeof q>],
+      ['totals', { ...f, dateRanges: range, dimensions: [], metrics: ['activeUsers', 'newUsers', 'sessions', 'engagedSessions', 'engagementRate', 'screenPageViews', 'averageSessionDuration', 'userEngagementDuration', 'eventCount'].map((name) => ({ name })), limit: 1, orderBys: [] } as ReturnType<typeof q>],
       ['places', q(['country', 'region', 'city'], ['activeUsers', 'sessions'])],
       ['devices', q(['deviceCategory', 'operatingSystem', 'browser'], ['activeUsers', 'sessions'])],
       ['sources', q(['sessionSource', 'sessionMedium'], ['activeUsers', 'sessions', 'engagedSessions'])],
@@ -100,10 +114,11 @@ async function gaDay(day: string) {
       ['visitors', q(['newVsReturning'], ['activeUsers', 'sessions'])],
       ['landing', q(['landingPage'], ['sessions', 'activeUsers'])],
       ['languages', q(['language'], ['activeUsers'])],
+      ['everyone', { dateRanges: range, dimensions: [], metrics: [{ name: 'activeUsers' }], limit: 1, orderBys: [] } as ReturnType<typeof q>],
     ];
     const call = (reqs: unknown[]) => fetch(`https://analyticsdata.googleapis.com/v1beta/properties/${property}:batchRunReports`, {
       method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ requests: reqs }), signal: AbortSignal.timeout(12000) }).then((r) => r.json());
-    const out: Record<string, unknown> = { connected: true, day };
+    const out: Record<string, unknown> = { connected: true, day, human };
     for (let i = 0; i < reports.length; i += 5) {
       const chunk = reports.slice(i, i + 5), j = await call(chunk.map((r) => r[1]));
       if (j.error) return { connected: true, error: j.error.message };
@@ -112,6 +127,9 @@ async function gaDay(day: string) {
         out[name] = gaRows(j.reports?.[n]).map((r) => Object.fromEntries([...dims.map((d, k) => [d, r.d[k]]), ...mets.map((m, k) => [m, r.m[k]])]));
       });
     }
+    const shown = Number((out.totals as Record<string, number>[])?.[0]?.activeUsers ?? 0), all = Number((out.everyone as Record<string, number>[])?.[0]?.activeUsers ?? shown);
+    out.bots_hidden = human ? Math.max(0, all - shown) : 0;
+    delete out.everyone;
     return out;
   } catch (e) {
     return { connected: true, error: String((e as Error).message ?? e) };
@@ -142,7 +160,16 @@ Deno.serve(async (req) => {
   }
 
   const body = await req.json().catch(() => ({}));
-  if (/^\d{4}-\d{2}-\d{2}$/.test(String(body.day ?? ''))) return reply({ ga_day: await gaDay(String(body.day)) });
+  const human = body.human !== false; // likely bots are left out unless the dashboard asks for everything
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(body.day ?? ''))) {
+    const day = String(body.day), from = new Date(day + 'T00:00:00+05:30'), to = new Date(from.getTime() + 864e5);
+    const [ga, { data: asks }, { data: cvs }] = await Promise.all([
+      gaDay(day, human),
+      db.from('ask_log').select('created_at, question, status, feedback, feedback_reasons, total_ms, has_jd').gte('created_at', from.toISOString()).lt('created_at', to.toISOString()).order('created_at'),
+      db.from('cv_requests').select('requested_at, email').gte('requested_at', from.toISOString()).lt('requested_at', to.toISOString()).order('requested_at'),
+    ]);
+    return reply({ ga_day: ga, asks: asks ?? [], cv_requests: cvs ?? [] });
+  }
   const days = [7, 30, 90].includes(Number(body.days)) ? Number(body.days) : 30;
   const since = new Date(Date.now() - days * 864e5);
   since.setUTCHours(0, 0, 0, 0);
@@ -151,7 +178,7 @@ Deno.serve(async (req) => {
     db.from('ask_log').select('id, created_at, question, status, answer, feedback, first_token_ms, total_ms, has_jd, unverified, feedback_reasons, feedback_note')
       .gte('created_at', since.toISOString()).order('created_at', { ascending: false }).limit(5000),
     db.from('cv_requests').select('id', { count: 'exact', head: true }).gte('requested_at', since.toISOString()),
-    gaTraffic(days),
+    gaTraffic(days, human),
   ]);
   if (error) return reply({ error: 'Could not read the log.' }, 500);
   const log = (rows ?? []) as Row[];

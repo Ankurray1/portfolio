@@ -18,6 +18,11 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 // the live site on GitHub Pages and Netlify (production plus its deploy previews), and local testing
 const ALLOWED_ORIGINS = [/^https:\/\/ankurray1\.github\.io$/, /^https:\/\/([a-z0-9-]+--)?ankurray[a-z0-9-]*\.netlify\.app$/, /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+)(:\d+)?$/];
 const PER_HOUR = 20;
+const PER_DAY = 60;  // one visitor, per day
+// all visitors together, per day: the ceiling on what the OpenAI key can spend (about $1 a day at gpt-4.1-mini prices)
+const SITE_PER_DAY = Number(Deno.env.get('ASK_DAILY_LIMIT') ?? 400);
+// scripts and crawlers, by the user agent they announce (a browser never sends these)
+const BOT_AGENT = /bot\b|crawl|spider|slurp|curl|wget|python|httpx|aiohttp|go-http|java\/|okhttp|axios|node-fetch|undici|postman|insomnia|headless|phantom|puppeteer|playwright|selenium|scrapy|libwww|^$/i;
 const MAX_ANSWER_TOKENS = 450;
 const MAX_ANSWER_TOKENS_FIT = 750; // a job-fit table needs more room
 const MAX_QUESTION = 2000;
@@ -124,7 +129,11 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers });
   if (req.method === 'GET') return reply({ ok: true });
   if (req.method !== 'POST') return reply({ status: 'invalid', error: 'POST only' }, 405);
-  if (origin && !ALLOWED_ORIGINS.some((r) => r.test(origin))) return reply({ status: 'invalid', error: 'origin not allowed' }, 403);
+  // only the site's own pages, from a browser: no Origin (a script or server), a foreign one or a bot agent is turned away
+  if (!origin || !ALLOWED_ORIGINS.some((r) => r.test(origin))) return reply({ status: 'invalid', error: 'origin not allowed' }, 403);
+  if (BOT_AGENT.test(req.headers.get('user-agent') ?? '')) return reply({ status: 'invalid', error: 'not allowed' }, 403);
+  // a switch to stop all answers at once (set ASK_PAUSED=1 in the function's secrets)
+  if (Deno.env.get('ASK_PAUSED') === '1') return reply({ status: 'rate_limited', answer: `Ask Ankur is resting for a while. Please email ${CONTACT}.`, sources: [] }, 503);
 
   const body = await req.json().catch(() => ({}));
 
@@ -169,6 +178,13 @@ Deno.serve(async (req) => {
   const { data: allowed, error: rateErr } = await db.rpc('ask_rate_hit', { p_bucket: (await sha256(ip + '|' + hour)).slice(0, 32), p_limit: PER_HOUR });
   if (rateErr) return reply({ status: 'error', error: 'Something went wrong. Please try again.' }, 500);
   if (!allowed) return reply({ status: 'rate_limited', answer: `You've asked a lot of questions this hour. Please try again later, or email ${CONTACT}.`, sources: [] }, 429);
+  // daily caps, per visitor and for the whole site, so a swarm of addresses can't run up the OpenAI bill
+  const today = hour.slice(0, 10);
+  const [{ data: mine }, { data: site }] = await Promise.all([
+    db.rpc('ask_budget_hit', { p_bucket: 'v' + (await sha256(ip + '|' + today)).slice(0, 31), p_limit: PER_DAY }),
+    db.rpc('ask_budget_hit', { p_bucket: 'site|' + today, p_limit: SITE_PER_DAY }),
+  ]);
+  if (mine === false || site === false) return reply({ status: 'rate_limited', answer: `Ask Ankur has answered a lot of questions today. Please try again tomorrow, or email ${CONTACT}.`, sources: [] }, 429);
 
   // compensation and notice period are for a direct conversation, not the site assistant
   if (POLICY.test(question) && !/salary revision/i.test(question)) {
