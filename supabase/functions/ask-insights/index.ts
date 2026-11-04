@@ -1,5 +1,5 @@
 // Ask Ankur insights · the numbers behind the site assistant, for Ankur only.
-// POST {"days": 7 | 30 | 90} with header x-insights-key → summary, daily counts, outcomes, top questions,
+// POST {"days": 7 | 30 | 90} (or {"day": "YYYY-MM-DD"} for one day in detail) with header x-insights-key → summary, daily counts, outcomes, top questions,
 // feedback (votes with their reasons and notes) and recent questions. The key is checked against SHA-256 hashes in public.insights_keys.
 // Website traffic comes from the GA4 Data API when the secrets GA4_PROPERTY_ID (the numeric property id) and
 // GA4_SERVICE_ACCOUNT (a service account's JSON key, added to the property as a Viewer) are set; otherwise ga.connected is false.
@@ -81,6 +81,43 @@ async function gaTraffic(days: number) {
   }
 }
 
+/* one day in detail: who came (in aggregate), from where, on what, and what they did. GA4 never identifies a person. */
+async function gaDay(day: string) {
+  const property = Deno.env.get('GA4_PROPERTY_ID'), saJson = Deno.env.get('GA4_SERVICE_ACCOUNT');
+  if (!property || !saJson) return { connected: false };
+  try {
+    const token = await gaAccessToken(JSON.parse(saJson));
+    const range = [{ startDate: day, endDate: day }];
+    const q = (dims: string[], mets: string[], limit = 50) => ({ dateRanges: range, dimensions: dims.map((name) => ({ name })), metrics: mets.map((name) => ({ name })), limit, orderBys: [{ metric: { metricName: mets[0] }, desc: true }] });
+    const reports: [string, ReturnType<typeof q>][] = [
+      ['totals', { dateRanges: range, dimensions: [], metrics: ['activeUsers', 'newUsers', 'sessions', 'engagedSessions', 'engagementRate', 'screenPageViews', 'averageSessionDuration', 'userEngagementDuration', 'eventCount'].map((name) => ({ name })), limit: 1, orderBys: [] } as ReturnType<typeof q>],
+      ['places', q(['country', 'region', 'city'], ['activeUsers', 'sessions'])],
+      ['devices', q(['deviceCategory', 'operatingSystem', 'browser'], ['activeUsers', 'sessions'])],
+      ['sources', q(['sessionSource', 'sessionMedium'], ['activeUsers', 'sessions', 'engagedSessions'])],
+      ['pages', q(['pageTitle'], ['screenPageViews', 'activeUsers'])],
+      ['events', q(['eventName'], ['eventCount', 'totalUsers'])],
+      ['hours', q(['hour'], ['activeUsers', 'sessions'], 24)],
+      ['visitors', q(['newVsReturning'], ['activeUsers', 'sessions'])],
+      ['landing', q(['landingPage'], ['sessions', 'activeUsers'])],
+      ['languages', q(['language'], ['activeUsers'])],
+    ];
+    const call = (reqs: unknown[]) => fetch(`https://analyticsdata.googleapis.com/v1beta/properties/${property}:batchRunReports`, {
+      method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ requests: reqs }), signal: AbortSignal.timeout(12000) }).then((r) => r.json());
+    const out: Record<string, unknown> = { connected: true, day };
+    for (let i = 0; i < reports.length; i += 5) {
+      const chunk = reports.slice(i, i + 5), j = await call(chunk.map((r) => r[1]));
+      if (j.error) return { connected: true, error: j.error.message };
+      chunk.forEach(([name, req], n) => {
+        const mets = (req.metrics as { name: string }[]).map((m) => m.name), dims = (req.dimensions as { name: string }[]).map((d) => d.name);
+        out[name] = gaRows(j.reports?.[n]).map((r) => Object.fromEntries([...dims.map((d, k) => [d, r.d[k]]), ...mets.map((m, k) => [m, r.m[k]])]));
+      });
+    }
+    return out;
+  } catch (e) {
+    return { connected: true, error: String((e as Error).message ?? e) };
+  }
+}
+
 const median = (xs: number[]) => {
   if (!xs.length) return null;
   const s = [...xs].sort((a, b) => a - b), m = s.length >> 1;
@@ -105,6 +142,7 @@ Deno.serve(async (req) => {
   }
 
   const body = await req.json().catch(() => ({}));
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(body.day ?? ''))) return reply({ ga_day: await gaDay(String(body.day)) });
   const days = [7, 30, 90].includes(Number(body.days)) ? Number(body.days) : 30;
   const since = new Date(Date.now() - days * 864e5);
   since.setUTCHours(0, 0, 0, 0);
