@@ -281,7 +281,11 @@ ${missing.map((k) => `${k}: ${QUESTIONS[k].ask}`).join('\n') || 'none'}`;
     if (!say || s.clar > 2) say = (s.clar > 2 ? 'No problem, you can also just tap one of these. ' : '') + QUESTIONS[next].ask;
   } else {
     s.clar = 0;
-    if (!say || out.ask !== next) say = QUESTIONS[next].ask;
+    if (!say || out.ask !== next) {
+      // keep the AI's reflection (its first sentence, if it is not a question), then ask the right question
+      const first = say.match(/^[^.!?]+[.!]/)?.[0]?.trim() ?? '';
+      say = (first && first.length < 160 ? first + ' ' : '') + QUESTIONS[next].ask;
+    }
   }
   s.asked = next;
   return reply({ state: s, say, chips: QUESTIONS[next].chips, done: false });
