@@ -396,9 +396,10 @@ async function endRec(keep, sr) {
   const n = r.chunks.reduce((a, c) => a + c.length, 0), pcm = new Float32Array(n);
   let o = 0; for (const c of r.chunks) { pcm.set(c, o); o += c.length; }
   const audio = resample(pcm, sr, 16000);
-  V.thinking = true; paintStatus(); paintCaption('…');
+  V.thinking = true; paintStatus(); paintCaption('');
   const id = ++V._id;
-  const text = await new Promise(res => { V._jobs.set(id, res); V._asrW.postMessage({ type: 'transcribe', id, audio, lang: D.lang === 'hi' ? 'hindi' : 'english' }, [audio.buffer]); });
+  const text = await new Promise(res => { V._jobs.set(id, res); V._asrW.postMessage({ type: 'transcribe', id, audio, lang: D.lang === 'hi' ? 'hindi' : 'english' }, [audio.buffer]);
+    setTimeout(() => { if (V._jobs.has(id)) { V._jobs.delete(id); res(''); } }, 20000); });   // never leave the user stuck on “Thinking…”
   V.thinking = false; paintCaption(text ? '“' + text.trim() + '”' : '');
   const t = (text || '').replace(/\[[^\]]*\]|\([^)]*\)/g, '').trim();
   if (!t || /^(thanks for watching|you|bye|\.+)[.!]?$/i.test(t)) { paintCaption(''); paintStatus('Sorry, I didn’t catch that. Try again, a little closer to the mic.'); setTimeout(listen, 1200); return; }
@@ -534,11 +535,11 @@ CS.dost = () => {
   <div class="dost-log" id="dlog" aria-live="polite">${D.msgs.map(m => `<div class="bub ${m.role === 'user' ? 'u' : 'd'}">${esc2(m.content)}</div>`).join('')}${D.busy ? '<div class="bub d"><span class="typing"><i></i><i></i><i></i></span></div>' : ''}</div>
   ${D.closing ? closingCard() : ''}
   ${D.chips.length && !D.busy ? `<div class="dost-chips">${D.chips.map(c => `<button class="chipbtn" data-act="d-chip" data-v="${esc2(c)}">${esc2(c)}</button>`).join('')}</div>` : ''}
-  ${D.done ? '' : `<form class="dost-input" id="dform" autocomplete="off">
+  <div class="dost-foot">${D.done ? '' : `<form class="dost-input" id="dform" autocomplete="off">
     <button type="button" class="dmic ${V.listening ? 'on' : ''}" data-act="d-mic" aria-label="${V.listening ? 'Stop listening' : 'Speak'}">${MIC}</button>
     <input id="dtext" placeholder="${D.mode === 'voice' ? 'Or type here…' : 'Type how you feel…'}" aria-label="Your answer" maxlength="600">
     <button class="dsend" aria-label="Send">${SEND}</button></form>`}
-  <p class="tiny muted" style="text-align:center">🔒 Your voice is turned into text on your phone. Your company never sees this.</p>`;
+  <p class="tiny muted" style="text-align:center;margin:0">🔒 Your voice is turned into text on your phone. Your company never sees this.</p></div>`;
 };
 function closingCard() {
   const C = D.closing, P = D.plan;
