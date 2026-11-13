@@ -754,6 +754,14 @@ if (sb) sb.onclick = ev => {
   setTimeout(() => document.addEventListener('click', () => m.remove(), { once: true }), 0);
 };
 window.__dostScenarios = { SCEN, runScenario };
-if (location.hash === '#dost') setTimeout(() => start('text'), 50);
+/* direct links: #dost opens Dost, #counselling opens Task 2's counsellor matching */
+CS.counsel = homeTask2;
+function openFromHash() {
+  const h = location.hash.toLowerCase();
+  if (h === '#dost') { S.role = 'client'; setTimeout(() => start('text'), 50); }
+  else if (h === '#counselling' || h === '#counseling' || h === '#matching') { S.role = 'client'; cgo('counsel'); }
+}
+window.addEventListener('hashchange', openFromHash);
+openFromHash();
 render();
 })();
