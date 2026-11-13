@@ -244,6 +244,7 @@ document.addEventListener('click', ev => {
       const P = prog(); P.feel.push({ ex: X.id, v });
       const to = X.from.startsWith('pg:') ? 'pg' : X.from;
       if (v === 'worse') { toast('Thanks for telling us.'); if (window.DOSTX) DOSTX.offerHuman(); else cgo('help'); break; }
+      if (window.DOSTX && DOSTX.afterStep(X, v)) break;  // guided plan from Dost: Dost leads to the next step
       if (v === 'same' && X.day === null) toast('Thanks. Try another exercise, or talk to Dost.');
       else toast(v === 'better' ? 'Glad it helped.' : 'Thanks. Keep going, it adds up.');
       if (to === 'pg') PGID = X.from.split(':')[1];

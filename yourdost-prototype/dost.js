@@ -44,17 +44,20 @@ const norm = t => String(t).replace(/[‘’ʼ`´]/g, "'");
 const isRisk = t => RISK.test(norm(t));
 function freq(t) {
   const x = norm(t).toLowerCase().trim();
-  if (/nearly every ?day|every ?day|all the time|always|daily|roz|hamesha|har din|रोज़|रोज|हमेशा/.test(x)) return 3;
-  if (/most days|more than half|often|mostly|a lot|zyada(tar)?|aksar|ज़्यादातर|अक्सर/.test(x)) return 2;
-  if (/some days|several days|sometimes|few days|occasionally|kabhi ?kabhi|कभी/.test(x)) return 1;
-  if (/^(no|nope|never|not at all|nahi|bilkul nahi|नहीं)\b/.test(x) || /not at all|never/.test(x)) return 0;
+  if (/\?\s*$/.test(x) && !/^(no|yes|not)/.test(x)) return null;                       // a question back is not an answer
+  if (/^(not really|not much|hardly|barely|rarely|not often|once or twice|once in a while|now and then)/.test(x)) return /^not (really|much)/.test(x) ? 0 : 1;
+  if (/nearly every ?day|almost every ?day|every ?(single )?(day|night|evening|morning)|all the time|all day|constantly|non ?stop|24\/7|always|daily|can'?t stop|cannot stop|roz|hamesha|har (din|waqt|roz)|रोज़|रोज|हमेशा/.test(x)) return 3;
+  if (/most days|most of the (time|week)|more than half|often|mostly|usually|a lot|quite a bit|many days|frequently|zyada(tar)?|aksar|bahut|ज़्यादातर|अक्सर|बहुत/.test(x)) return 2;
+  if (/some days|several days|sometimes|few days|couple of days|occasionally|a (little )?bit|a little|on and off|here and there|on bad days|kabhi ?kabhi|thoda|कभी/.test(x)) return 1;
+  if (/^(no|nope|nah|never|not at all|none|nothing like that|i'?m (fine|ok|okay|good)|nahi|bilkul nahi|नहीं)\b/.test(x) || /not at all|never|not really/.test(x)) return 0;
   return null;
 }
 function safetyAns(t) {
   const x = norm(t).toLowerCase().trim();
   if (/rather not|don'?t want to say|skip|pass/.test(x)) return 'skip';
   if (/^(yes|yeah|sometimes|often|haan|ha\b|kabhi|हाँ|हां)/.test(x)) return 'yes';
-  if (/^(no|nope|never|not really|nahi|bilkul nahi|नहीं)\b/.test(x)) return 'no';
+  if (/^(no|nope|nah|never|not really|not at all|nothing like that|i'?m (safe|fine|ok|okay)|nahi|bilkul nahi|नहीं)\b/.test(x)) return 'no';
+  if (/\b(maybe|kind of|sort of|at times|once|thought about it)\b/.test(x)) return 'yes';
   return null;
 }
 const tagsFrom = t => Object.keys(TAGRE).map(k => [k, t.search(TAGRE[k])]).filter(x => x[1] >= 0).sort((x, y) => x[1] - y[1]).map(x => x[0]).slice(0, 3); // first-mentioned first
@@ -76,11 +79,11 @@ function localTurn(s0, text) {
     prefix = 'Thank you for sharing that. ';
   } else if (/^i\d$/.test(s.asked)) {
     const f = freq(text);
-    if (f === null) return { state: s, say: 'Sorry, I didn’t quite catch that. ' + Q[s.asked].ask, chips: Q[s.asked].chips, done: false };
+    if (f === null) return { state: s, say: (/\?\s*$/.test(text) ? 'Good question. These few questions are a short, validated check, so I can point you to the right kind of support. ' : 'Thanks for telling me. ') + 'Over the last two weeks, would you say not at all, a few days, more than half the days, or nearly every day?', chips: Q[s.asked].chips, done: false };
     s.items[+s.asked[1]] = f;
   } else if (s.asked === 'safety') {
     const a = safetyAns(text);
-    if (!a) return { state: s, say: 'Sorry, I didn’t quite catch that. ' + Q.safety.ask, chips: Q.safety.chips, done: false };
+    if (!a) return { state: s, say: 'I want to be sure I get this right, and it’s okay to answer honestly. Have you had any thoughts of hurting yourself lately? You can say no, sometimes, often, or that you’d rather not say.', chips: Q.safety.chips, done: false };
     s.safety = a;
   }
   const n = nextKey(s);
@@ -88,6 +91,81 @@ function localTurn(s0, text) {
   s.asked = n;
   return { state: s, say: prefix + Q[n].ask, chips: Q[n].chips, done: false };
 }
+
+/* research behind each step: fixed, cited, reviewed. The AI never writes facts or numbers. */
+const EVID = {
+  ex_box: 'Breathing exercises like this lowered stress and anxiety in a 2023 review of 12 randomised trials (Fincham et al., Scientific Reports).',
+  ex_478: 'Slow breathing calms the body before sleep; breathwork lowered stress and anxiety in a 2023 review of 12 randomised trials (Fincham et al., Scientific Reports).',
+  ex_ground: 'Mindfulness practices like this eased anxiety in a review of 47 trials with over 3,500 people (Goyal et al., JAMA Internal Medicine, 2014).',
+  ex_body: 'Mindfulness practice improved sleep quality in a review of 18 trials (Rusch et al., Annals of the New York Academy of Sciences, 2019).',
+  ex_good: 'Writing down three good things each day lifted happiness and eased low mood for up to six months (Seligman et al., American Psychologist, 2005).',
+  ex_worry: 'Giving worry a short, fixed time each day reduced worry and anxiety in a controlled study (McGowan and Behar, Behavior Modification, 2013).',
+  ex_reach: 'People underestimate how much others value hearing from them, even through a short message (Liu et al., Journal of Personality and Social Psychology, 2023).',
+  pg_sleep: 'A steady wind-down routine is part of CBT for insomnia, the first-line treatment for poor sleep (American College of Physicians, 2016).',
+  counsel: 'The average person in counselling ends up better off than about 80% of people who don’t get it (Wampold and Imel, 2015).',
+};
+function localWrap(P) {
+  const st = D.state, heard = (P.concerns || []).map(c => (CL[c] || '').toLowerCase()).filter(Boolean);
+  const mood = (st.items[0] ?? 0) + (st.items[1] ?? 0), worry = (st.items[2] ?? 0) + (st.items[3] ?? 0);
+  const hardest = worry > mood ? 'the worrying that doesn’t switch off' : mood > worry ? 'feeling low and flat' : 'carrying all of it at once';
+  const about = heard.length ? heard.join(' and ') : 'what you’re going through';
+  const f = firstStep(P);
+  return { summary: `I hear you. ${about.charAt(0).toUpperCase() + about.slice(1)} has been weighing on you, especially ${hardest}, and it makes sense that you feel this way.`,
+    nudge: `Let’s start with ${f.name} right now; it only takes ${f.mins} minutes.` };
+}
+async function getWrap(P) {
+  const f = firstStep(P), ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const r = await fetch(DOST_API, { method: 'POST', signal: ctrl.signal, headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'wrap', messages: D.msgs.slice(-14), state: D.state, plan: { priority: P.priority, first: f.name, mins: f.mins } }) });
+    clearTimeout(t); const j = r.ok ? await r.json() : null;
+    if (j && j.summary) return { summary: j.summary, nudge: j.nudge || localWrap(P).nudge };
+  } catch { clearTimeout(t); }
+  return localWrap(P);
+}
+/* the plan, step by step, in the order Dost guides the user through it */
+function planSteps(P) {
+  const X = CAT.EX[P.ex], G = CAT.PG[P.pg], t = P.tid ? TX[P.tid] : null;
+  const when = t && P.slot ? slotLabel(...P.slot.split('-').map(Number)).replace(/^(Today|Tomorrow)/, m => m.toLowerCase()) : 'within 2 days';
+  if (P.priority === 'medium') return [
+    { k: 'ex', name: X.name, mins: X.mins, line: `${X.name} now (${X.mins} min)`, ev: EVID[P.ex] },
+    { k: 'book', name: t ? `a session with ${first(t.name)}` : 'a counsellor', line: t ? `Book ${first(t.name)}, ${t.title.toLowerCase()}, for ${when}` : 'Book a counsellor within 2 days', ev: EVID.counsel },
+    { k: 'pg', name: G.name, line: `${G.name}, 10 minutes a day while you wait` },
+    { k: 'check', line: 'I’ll check in with you in 2 days' }];
+  const d1 = G.days[0][1], E1 = CAT.EX[d1];
+  return [
+    { k: 'pg1', name: `Day 1 of ${G.name}`, mins: E1.mins, line: `Day 1 of ${G.name}: ${E1.name} (${E1.mins} min)`, ev: EVID[P.pg] || EVID[d1] },
+    P.ex !== d1 ? { k: 'ex', name: X.name, line: `${X.name} whenever you need a reset`, ev: EVID[P.ex] }
+      : { k: 'pg', name: G.name, line: `Days 2 to 7 of ${G.name}, 10 minutes a day` },
+    { k: 'check', line: 'I’ll check in with you on day 7, and you can ask for a counsellor anytime' }];
+}
+const firstStep = P => { const s = planSteps(P)[0]; return { name: s.name, mins: s.mins || 5 }; };
+function startStep(k) {
+  const P = D.plan; if (!P) return;
+  D.coach = null;
+  if (k === 'ex') return CATX.openEx(P.ex, 'dostplan');
+  if (k === 'pg1') return CATX.openEx(CAT.PG[P.pg].days[0][1], 'pg:' + P.pg, 0);
+  if (k === 'pg') return CATX.openPg(P.pg);
+  S.c.screen = 'dostplan'; render();
+  if (k === 'book') { const b = document.querySelector('[data-act="d-book"]'); if (b) b.scrollIntoView({ block: 'center' }); }
+}
+/* after an exercise that was part of the plan, Dost leads to the next step */
+window.DOSTX = {
+  offerHuman: () => cgo('help'),
+  afterStep(X, v) {
+    const P = D.plan; if (!P || P.priority === 'high' || v === 'worse') return false;
+    const isEx = X.id === P.ex && X.from === 'dostplan', isDay1 = X.from === 'pg:' + P.pg && X.day === 0 && P.priority === 'low';
+    if (!isEx && !isDay1) return false;
+    const t = P.tid ? TX[P.tid] : null;
+    let say;
+    if (P.priority === 'medium') say = P.booked ? `Nice work. Your session with ${t ? first(t.name) : 'your counsellor'} is booked. Next, start ${CAT.PG[P.pg].name} while you wait.`
+      : `Nice work${v === 'better' ? ', I’m glad it helped' : ''}. Next, let’s book your session with ${t ? first(t.name) : 'a counsellor'}, so you have someone in your corner this week.`;
+    else say = `Day 1 done${v === 'better' ? ', and I’m glad it helped' : ''}. Keep ${CAT.EX[P.ex].name} handy for tough moments, and come back tomorrow for day 2 of ${CAT.PG[P.pg].name}. I’ll check in on day 7.`;
+    D.coach = { say, next: P.priority === 'medium' ? (P.booked ? 'pg' : 'book') : null };
+    S.c.screen = 'dostplan'; render(); window.scrollTo({ top: 0 }); speak(say);
+    return true;
+  },
+};
 
 /* =====================================================================
    VOICE ENGINE (on-device, open source)
@@ -333,12 +411,12 @@ function micOff() {
 /* =====================================================================
    CONVERSATION
    ===================================================================== */
-const D = { mode: null, voiceOut: true, lang: 'en', msgs: [], state: blank(), chips: [], busy: false, done: false, live: null, result: null, plan: null, check: null };
+const D = { mode: null, voiceOut: true, lang: 'en', msgs: [], state: blank(), chips: [], busy: false, done: false, live: null, result: null, plan: null, check: null, closing: null, coach: null };
 window.DOST = D;
 
 async function start(mode) {
   stopSpeaking(); micOff();
-  Object.assign(D, { mode, msgs: [], state: blank(), chips: [], busy: false, done: false, result: null, check: null });
+  Object.assign(D, { mode, msgs: [], state: blank(), chips: [], busy: false, done: false, result: null, check: null, closing: null, coach: null });
   if (mode === 'voice') { loadVoice(); micOn(); }                   // the tap gives mic permission
   const hello = HELLO;
   D.msgs.push({ role: 'assistant', content: hello }); D.chips = Q.concern.chips;
@@ -374,9 +452,28 @@ async function send(text) {
   D.msgs.push({ role: 'assistant', content: r.say });
   if (r.done) { D.done = true; D.result = decide(D.state); D.plan = buildPlan(); }
   render();
+  if (D.done && D.result.priority !== 'high') return closing(r.say);
   await speak(r.say);
-  if (D.done) { micOff(); setTimeout(() => { if (S.c.screen === 'dost') { S.c.screen = D.result.priority === 'high' ? 'dosthigh' : 'dostplan'; render(); window.scrollTo({ top: 0 }); } }, 700); }
+  if (D.done) { micOff(); setTimeout(() => { if (S.c.screen === 'dost') { S.c.screen = 'dosthigh'; render(); window.scrollTo({ top: 0 }); } }, 700); }
   else listen();
+}
+
+/* the end of the check-in: what I heard, why this plan, and the first step, done together */
+async function closing(thanks) {
+  micOff();
+  const P = D.plan;
+  D.busy = true; render();
+  const [w] = await Promise.all([getWrap(P), speak(thanks)]);
+  const steps = planSteps(P), s1 = steps[0];
+  D.busy = false;
+  D.msgs.push({ role: 'assistant', content: w.summary });
+  D.closing = { steps, nudge: w.nudge };
+  render();
+  const say = async t => { if (S.c.screen === 'dost' && D.closing) await speak(t); }; // stops once the user moves on
+  await say(w.summary);
+  await say(`Here's what I suggest, one step at a time. ${steps.map((x, i) => `${['First', 'Then', 'After that', 'And'][i]}, ${x.line.charAt(0).toLowerCase() + x.line.slice(1)}.`).join(' ')}`);
+  if (s1.ev) await say(s1.ev.replace(/\s*\([^)]*\)\.?$/, '.'));
+  await say(w.nudge);
 }
 
 /* ---------------- plan: the right category, in the right order ---------------- */
@@ -424,6 +521,7 @@ CS.dost = () => {
     <div class="dost-caption" id="dcap"></div>
   </div>
   <div class="dost-log" id="dlog" aria-live="polite">${D.msgs.map(m => `<div class="bub ${m.role === 'user' ? 'u' : 'd'}">${esc2(m.content)}</div>`).join('')}${D.busy ? '<div class="bub d"><span class="typing"><i></i><i></i><i></i></span></div>' : ''}</div>
+  ${D.closing ? closingCard() : ''}
   ${D.chips.length && !D.busy ? `<div class="dost-chips">${D.chips.map(c => `<button class="chipbtn" data-act="d-chip" data-v="${esc2(c)}">${esc2(c)}</button>`).join('')}</div>` : ''}
   ${D.done ? '' : `<form class="dost-input" id="dform" autocomplete="off">
     <button type="button" class="dmic ${V.listening ? 'on' : ''}" data-act="d-mic" aria-label="${V.listening ? 'Stop listening' : 'Speak'}">${MIC}</button>
@@ -431,8 +529,17 @@ CS.dost = () => {
     <button class="dsend" aria-label="Send">${SEND}</button></form>`}
   <p class="tiny muted" style="text-align:center">🔒 Your voice is turned into text on your phone. Your company never sees this.</p>`;
 };
+function closingCard() {
+  const C = D.closing, P = D.plan;
+  return `<div class="tile" style="display:grid;gap:10px;border:1.5px solid var(--green-deep)">
+    <span class="lbl">Your plan, one step at a time · ${P.priority === 'medium' ? 'extra support' : 'light support'}</span>
+    ${C.steps.map((x, i) => `<div class="row" style="gap:10px;align-items:flex-start"><span class="pnum">${i + 1}</span><div style="flex:1;min-width:0"><b class="small">${esc2(x.line)}</b>${x.ev ? `<div class="tiny muted" style="margin-top:3px">📖 ${esc2(x.ev)}</div>` : ''}</div></div>`).join('')}
+    <p class="small" style="margin:0">${esc2(C.nudge)}</p>
+    <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn" data-act="d-step" data-v="${C.steps[0].k}">Start step 1 now</button><button class="btn ghost" data-act="d-planview">See my full plan</button></div>
+  </div>`;
+}
 function statusText() {
-  if (D.done) return 'Making your plan…';
+  if (D.done) return D.closing ? (V.speaking ? 'Dost is speaking' : 'Your plan is ready') : 'Making your plan…';
   if (D.mode === 'voice') {
     if (V.micOk === false) return 'Mic is off. You can type or tap an answer.';
     if (V.asr === 'loading') return `Getting voice ready on your phone… ${V.asrPct}% (one time)`;
@@ -468,7 +575,9 @@ CS.dostplan = () => {
     steps.push(step(2, `Anytime · ${X.mins} min · self-help`, X.name, X.why, exBtn, P.quick));
     steps.push(step(3, 'Day 7', 'Dost checks in', 'Not better? We’ll connect you to the right counsellor.'));
   }
+  const coach = D.coach ? `<div class="tile" style="display:grid;gap:8px;border:1.5px solid var(--green-deep)"><span class="lbl">Dost</span><p class="small" style="margin:0">${esc2(D.coach.say)}</p>${D.coach.next ? `<button class="btn sm" style="justify-self:start" data-act="d-step" data-v="${D.coach.next}">${D.coach.next === 'book' ? 'Book my session' : 'Start the program'}</button>` : ''}</div>` : '';
   return `<div class="phead">${back('home')}<span class="tag">${P.priority === 'medium' ? 'Plan · extra support' : 'Plan · light support'}</span></div>
+  ${coach}
   <div class="blob ${g}" style="display:grid;gap:8px;min-height:170px;align-content:end"><span class="lbl">Your plan, Riya</span><h1 style="color:#fff">${title}</h1><p style="color:#fff">${line}</p></div>
   ${heard.length ? `<div><span class="lbl">What I heard</span><div class="tags" style="margin-top:6px">${heard.map(h => `<span class="tag">${esc2(h)}</span>`).join('')}</div></div>` : ''}
   <div class="tile" style="display:grid;gap:4px">${steps.join('')}</div>
@@ -585,6 +694,8 @@ document.addEventListener('click', e => {
   switch (a.dataset.act) {
     case 'd-start': start(v); window.scrollTo({ top: 0 }); break;
     case 'd-chip': send(v); break;
+    case 'd-step': stopSpeaking(); startStep(v); window.scrollTo({ top: 0 }); break;
+    case 'd-planview': stopSpeaking(); D.coach = null; c.screen = 'dostplan'; render(); window.scrollTo({ top: 0 }); break;
     case 'd-mic':
       if (V.speaking) { stopSpeaking(); paintStatus(); listen(); break; }
       if (V.listening) { stopListening(false); break; }
@@ -609,7 +720,7 @@ document.addEventListener('click', e => {
 });
 window.__dostVoice = { V, loadVoice, resample, CACHE, synth }; // for diagnostics in the console
 window.addEventListener('pagehide', micOff);
-document.addEventListener('click', e => { if (e.target.closest('[data-act="resetall"]')) { stopSpeaking(); micOff(); Object.assign(D, { mode: null, msgs: [], state: blank(), chips: [], busy: false, done: false, live: null, result: null, plan: null, check: null }); setTimeout(render, 0); } }, true);
+document.addEventListener('click', e => { if (e.target.closest('[data-act="resetall"]')) { stopSpeaking(); micOff(); Object.assign(D, { mode: null, msgs: [], state: blank(), chips: [], busy: false, done: false, live: null, result: null, plan: null, check: null, closing: null, coach: null }); setTimeout(render, 0); } }, true);
 /* ---------------- prototype: test scenarios (each one runs a full Dost chat) ---------------- */
 const SCEN = [
   ['Work stress, mild', 'Low → Calm at Work + Box breathing', 'Work has been stressful this month, too many deadlines.', ['Some days', 'Not at all', 'Some days', 'Some days', 'No']],
