@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Smart Therapist Matching</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Doto:wght@700;900&display=swap">
+<style>
+/* Layout: soft mist canvas. Client = phone-sized app, centred. Therapist = desktop dashboard with sidebar. Calm palette: sage-teal primary, soft blues/greens, warm neutrals. No black. */
+:root{
+  --bg:#e9efed; --surface:#fbfcfb; --surface-2:#eef3f1; --ink:#2f4246; --muted:#6e8185; --line:#d6e0dd;
+  --primary:#4f8a83; --on-primary:#ffffff; --primary-soft:#dcede8;
+  --lime:#d3eadf; --lime-ink:#24504a; --green:#5c9a8a; --green-deep:#2f6159; --amber:#b38a55; --rose:#c9768f; --sky:#7a9cc4;
+  --good:#3f8a6e; --bad:#b9606e; --focus:#4f8a83;
+  --body:"Onest","Segoe UI",system-ui,sans-serif; --dot:"Doto",ui-monospace,"Consolas",monospace;
+  --r-xl:28px; --r-lg:20px; --r-md:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#162224; --surface:#1d2c2e; --surface-2:#253739; --ink:#e2ecea; --muted:#9db2b2; --line:#304446;
+  --primary:#7fbdb4; --on-primary:#12302c; --primary-soft:#28463f; --lime:#2c4a44; --lime-ink:#cfeae0;
+  --green:#86c2b1; --green-deep:#b6dfd3; --amber:#d8b27f; --rose:#e3a0b3; --sky:#a5bfdf; --good:#86c2b1; --bad:#e39aa6; --focus:#b6dfd3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#162224; --surface:#1d2c2e; --surface-2:#253739; --ink:#e2ecea; --muted:#9db2b2; --line:#304446;
+  --primary:#7fbdb4; --on-primary:#12302c; --primary-soft:#28463f; --lime:#2c4a44; --lime-ink:#cfeae0;
+  --green:#86c2b1; --green-deep:#b6dfd3; --amber:#d8b27f; --rose:#e3a0b3; --sky:#a5bfdf; --good:#86c2b1; --bad:#e39aa6; --focus:#b6dfd3; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+h1,h2,h3{margin:0;text-wrap:balance;letter-spacing:-.01em;font-weight:600}
+h1{font-size:28px;line-height:1.12} h2{font-size:21px;line-height:1.2} h3{font-size:16px}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--green-deep)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* prototype bar */
+.proto{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px)}
+.proto .wrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-block:10px}
+.proto .who{margin-right:auto;display:flex;gap:10px;align-items:center;font-size:13px;color:var(--muted)}
+.mark{width:28px;height:28px;border-radius:50%;flex:none;background:radial-gradient(circle,#ffffff 0 16%,#5c9a8a 17% 38%,#a9c9e0 64%,#e3ecf1 100%)}
+.seg{display:inline-flex;background:var(--surface);border-radius:999px;padding:3px}
+.seg button{border:0;background:none;padding:7px 14px;border-radius:999px;font-size:13.5px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--primary);color:var(--on-primary);font-weight:600}
+main{padding-block:6px 48px}
+
+/* shared atoms */
+.lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)} .small{font-size:13px} .tiny{font-size:12px}
+.card{background:var(--surface);border-radius:var(--r-xl);padding:20px;min-width:0}
+.tile{background:var(--surface-2);border-radius:var(--r-lg);padding:16px;min-width:0}
+.blob{position:relative;border-radius:var(--r-xl);padding:22px;color:#fff;overflow:hidden;isolation:isolate;min-width:0}
+.blob::after{content:"";position:absolute;inset:0;z-index:-1;opacity:.35;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.blob .lbl{color:rgba(255,255,255,.9)}
+.blob h1,.blob h2,.blob p,.blob b,.blob .dotnum{text-shadow:0 1px 14px rgba(30,55,60,.35)}
+.g-green{background:radial-gradient(130% 95% at 50% 100%,#3f7d6d 0%,#68a08c 32%,#a7cab7 62%,#e6eee6 100%)}
+.g-orange{background:radial-gradient(130% 95% at 50% 100%,#b97c5c 0%,#d6a07f 34%,#ebcdb4 64%,#f4ece4 100%)}
+.g-pink{background:radial-gradient(130% 95% at 50% 100%,#5c80b8 0%,#86a1d4 34%,#c2c3ea 64%,#ede6f2 100%)}
+.g-sky{background:radial-gradient(130% 95% at 50% 100%,#4e7da3 0%,#7ea3c4 35%,#b9cde0 65%,#e9eef3 100%)}
+.btn.white{color:var(--primary)!important}
+.dotnum{font-family:var(--dot);font-weight:900;line-height:.95;font-variant-numeric:tabular-nums}
+.stack{display:grid;gap:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.between{justify-content:space-between}
+.btn{border:0;border-radius:999px;padding:13px 20px;background:var(--primary);color:var(--on-primary);font-weight:600;font-size:14.5px;text-align:center;text-decoration:none;display:inline-flex;justify-content:center;align-items:center;gap:6px}
+.btn.ghost{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.btn.lime{background:var(--lime);color:var(--lime-ink)}
+.btn.white{background:#fff;color:var(--primary)}
+.btn.sm{padding:7px 13px;font-size:13px}
+.btn.block{width:100%}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.link{border:0;background:none;padding:0;color:var(--green-deep);font-size:13.5px;text-decoration:underline;text-underline-offset:3px}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:600;background:var(--surface-2);white-space:nowrap}
+.tile .tag{background:var(--surface)}
+.tag.lime{background:var(--lime);color:var(--lime-ink)}
+.tag.rose{background:color-mix(in srgb,var(--rose) 22%,var(--surface));color:var(--ink)}
+.tag.green{background:color-mix(in srgb,var(--green) 22%,var(--surface));color:var(--ink)}
+.tag.amber{background:color-mix(in srgb,var(--amber) 26%,var(--surface));color:var(--ink)}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.avatar{width:44px;height:44px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:600;color:#fff;font-size:15px}
+.avatar.lg{width:72px;height:72px;font-size:22px}
+.why{display:grid;gap:6px;font-size:13.5px;padding:0;margin:0;list-style:none}
+.why li{display:flex;gap:8px}
+.why li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green);margin-top:7px;flex:none}
+.dots{display:flex;gap:4px;flex-wrap:wrap}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--green)}
+.callout{border-radius:var(--r-lg);padding:13px 15px;background:color-mix(in srgb,var(--lime) 28%,var(--surface));font-size:13.5px}
+.callout.rose{background:color-mix(in srgb,var(--rose) 15%,var(--surface))}
+.svgwrap svg{display:block;width:100%;height:auto}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--primary);color:var(--on-primary);padding:10px 18px;border-radius:999px;font-size:14px;z-index:20;max-width:calc(100% - 32px)}
+
+/* client phone */
+.phone{max-width:420px;margin:0 auto;background:var(--surface);border-radius:38px;min-height:780px;display:flex;flex-direction:column;box-shadow:0 30px 60px -30px rgba(0,0,0,.25),0 0 0 8px color-mix(in srgb,var(--primary) 30%,var(--surface))}
+.pbody{flex:1;padding:20px 18px 24px;display:grid;gap:16px;align-content:start}
+.phead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.iconbtn{width:38px;height:38px;border-radius:50%;border:0;background:var(--surface-2);display:grid;place-items:center;font-size:16px}
+.tabbar{position:sticky;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);border-radius:0 0 38px 38px;padding:8px 10px calc(10px + env(safe-area-inset-bottom,0px))}
+.tabbar button{border:0;background:none;padding:8px 4px;border-radius:14px;font-size:12px;color:var(--muted);display:grid;justify-items:center;gap:2px}
+.tabbar button[aria-current="page"]{color:var(--ink);font-weight:600;background:var(--surface-2)}
+.tabbar svg{width:20px;height:20px}
+.progress{display:flex;gap:5px}
+.progress i{height:4px;flex:1;border-radius:4px;background:var(--line)}
+.progress i.on{background:var(--primary)}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chip{border:0;text-align:left;border-radius:var(--r-lg);background:var(--surface-2);padding:13px;min-height:58px;position:relative;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--primary-soft);color:var(--lime-ink);font-weight:600;box-shadow:inset 0 0 0 2px var(--primary)}
+.pref{display:grid;gap:10px;padding:14px;border-radius:var(--r-lg);background:var(--surface-2)}
+.pref .opts{display:grid;grid-template-columns:1fr auto 1fr;gap:6px}
+.pref .opts button{border:0;border-radius:14px;padding:12px 8px;background:var(--surface);font-size:13.5px;line-height:1.25}
+.pref .opts button.either{padding-inline:12px;color:var(--muted);font-size:12.5px}
+.pref .opts button[aria-pressed="true"]{background:var(--primary-soft);color:var(--lime-ink);font-weight:600;box-shadow:inset 0 0 0 2px var(--primary)}
+.heart{justify-self:start;border:0;background:none;padding:2px 0;font-size:12.5px;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
+.heart[aria-pressed="true"]{color:var(--green-deep);font-weight:600}
+.track5{position:relative;display:grid;grid-template-columns:repeat(5,1fr);height:34px}
+.track5::before{content:"";position:absolute;left:10%;right:10%;top:50%;height:4px;border-radius:4px;background:var(--line);transform:translateY(-50%)}
+.track5 button{position:relative;border:0;background:none;padding:0;display:grid;place-items:center}
+.track5 button::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--line);grid-area:1/1}
+.track5 button:hover::before{background:var(--muted)}
+.mk{display:inline-block;width:14px;height:14px;border-radius:50%;grid-area:1/1}
+.mk.client{background:var(--green)}
+.mk.self{width:22px;height:22px;border:2.5px solid var(--primary);background:transparent}
+.safe{display:grid;gap:10px;padding:14px;border-radius:var(--r-lg);background:color-mix(in srgb,var(--sky) 14%,var(--surface))}
+.chip .rank{position:absolute;top:6px;right:10px;font-family:var(--dot);font-weight:900;font-size:20px}
+.q{display:grid;gap:8px;padding:13px;border-radius:var(--r-lg);background:var(--surface-2)}
+.scale{display:flex;gap:6px;flex-wrap:wrap}
+.scale button{border:0;border-radius:999px;padding:7px 11px;background:var(--surface);font-size:12.5px}
+.scale button[aria-pressed="true"]{background:var(--primary);color:var(--on-primary)}
+.scale.five button{flex:1;padding:9px 0;font-weight:600}
+.scale.four{display:grid;grid-template-columns:1fr 1fr}
+.scale.four button{padding:10px 8px;border-radius:14px}
+.slider{display:grid;gap:6px;padding:13px;border-radius:var(--r-lg);background:var(--surface-2)}
+.slider .ends{display:flex;justify-content:space-between;font-size:13px;gap:10px}
+input[type=range]{width:100%;accent-color:var(--green)}
+.check{display:inline-flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)}
+select,textarea{background:var(--surface-2);border:0;border-radius:12px;padding:11px 12px;width:100%}
+.field{display:grid;gap:6px;min-width:0}
+.mcard{background:var(--surface-2);border-radius:var(--r-lg);padding:15px;display:grid;gap:11px}
+.mcard.best{box-shadow:inset 0 0 0 2px var(--lime)}
+.slotgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.slot{border:0;border-radius:var(--r-md);background:var(--surface-2);padding:11px;text-align:left;font-size:13px}
+.slot[aria-pressed="true"]{background:var(--primary);color:var(--on-primary)}
+.style-ind{display:grid;gap:4px}
+.style-ind .bar{position:relative;height:6px;border-radius:6px;background:var(--line)}
+.style-ind .bar i{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:var(--green);transform:translate(-50%,-50%)}
+.style-ind .bar b{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;border:2px solid var(--muted);transform:translate(-50%,-50%);background:var(--surface)}
+.listrow{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.listrow:last-child{border-bottom:0}
+.room{min-height:420px;display:grid;place-items:center;text-align:center;gap:14px;align-content:center}
+
+/* therapist dashboard */
+.tdash{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px;align-items:start}
+.side{background:var(--surface);border-radius:var(--r-xl);padding:16px;display:grid;gap:4px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 64px)}
+.side .me{display:flex;gap:10px;align-items:center;padding:4px 4px 14px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.side button{border:0;background:none;text-align:left;padding:10px 12px;border-radius:12px;font-size:14px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.side button[aria-current="page"]{background:var(--primary);color:var(--on-primary);font-weight:600}
+.badge{min-width:20px;height:20px;border-radius:999px;background:var(--rose);color:#fff;font-size:11px;font-weight:700;display:inline-grid;place-items:center;padding:0 6px}
+@media (max-width:860px){.tdash{grid-template-columns:1fr}.side{position:static;grid-auto-flow:column;grid-auto-columns:max-content;overflow-x:auto}.side .me{display:none}}
+.tgrid{display:grid;gap:16px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.kpi{background:var(--surface);border-radius:var(--r-lg);padding:16px;display:grid;gap:4px;min-width:0}
+.kpi .dotnum{font-size:38px}
+.cols{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:1000px){.cols{grid-template-columns:1fr}}
+.sched{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.sched:last-child{border-bottom:0}
+.alert{display:grid;gap:6px;padding:14px;border-radius:var(--r-lg);background:var(--surface-2)}
+.alert.rose{background:color-mix(in srgb,var(--rose) 13%,var(--surface-2))}
+.alert.lime{background:color-mix(in srgb,var(--lime) 25%,var(--surface-2))}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-weight:600;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--surface-2)}
+.avail{display:grid;grid-template-columns:70px repeat(6,minmax(54px,1fr));gap:6px;min-width:460px}
+.avail .h{font-size:11.5px;color:var(--muted);text-align:center;align-self:end}
+.avail .d{font-size:12.5px;align-self:center}
+.cell{border:0;border-radius:10px;height:34px;background:var(--surface-2);font-size:11px;color:var(--muted)}
+.cell[aria-pressed="true"]{background:var(--green);color:#fff;font-weight:600}
+.cell.booked{background:var(--primary);color:var(--on-primary)}
+.cell:disabled{opacity:.35;cursor:not-allowed}
+.stepper{display:inline-flex;align-items:center;gap:10px;background:var(--surface-2);border-radius:999px;padding:4px}
+.stepper button{width:32px;height:32px;border-radius:50%;border:0;background:var(--surface);font-size:16px}
+.meter{height:8px;border-radius:8px;background:var(--line);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--green)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<meta name="description" content="Smart Therapist Matching: client and therapist app prototype (YourDOST PM assignment, Task 2). Fictional data.">
+<meta name="robots" content="noindex">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div class="proto"><div class="wrap">
+  <div class="who"><span class="mark" aria-hidden="true"></span><span><b style="color:var(--ink)">Smart Therapist Matching</b> · prototype, fictional data</span></div>
+  <div class="seg" role="group" aria-label="Which app to view" id="roleSeg"></div>
+  <button class="btn ghost sm" data-act="resetall">Reset demo</button>
+</div></div>
+<main class="wrap" id="view"></main>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ======================= DATA ======================= */
+const CONCERNS=[['exams','Exams & studies'],['work','Work stress'],['low','Feeling low'],['anx','Anxiety & worry'],['rel','Relationships'],['family','Family pressure'],['sleep','Sleep problems'],['lonely','Loneliness'],['career','Career confusion']];
+const CL=Object.fromEntries(CONCERNS);
+const LANGS=['English','Hindi','Tamil','Telugu','Kannada','Bengali','Marathi','Malayalam'];
+const MODES=[['video','Video'],['call','Call'],['chat','Chat']];
+const SLIDERS=[['Practical tips','Space to talk'],['Guides you','Follows your lead'],['Focus on now','Explore the past'],['Gentle','Kind but direct']];
+const STYLEQ=[{q:'Would you like tips to try, or space to talk things through?',a:['Tips to try','Space to talk']},
+  {q:'Should they guide you, or follow your lead?',a:['Guide me','Follow my lead']},
+  {q:'Focus on what’s happening now, or what led here?',a:['What’s happening now','What led here']},
+  {q:'Should they be gentle, or kind but direct?',a:['Gentle','Kind but direct']}];
+const STYLEWHY=[['Gives practical tips, like you asked','Gives you space to talk, like you asked'],['Gently guides you, like you asked','Follows your lead, like you asked'],['Focuses on what’s happening now','Helps you understand what led here'],['Gentle, like you asked','Kind but direct, like you asked']];
+const MOODQ=['Have you lost interest in things you usually enjoy?','Have you felt down or hopeless?','Have you felt anxious or on edge?','Has it been hard to stop worrying?'];
+const MOODA=['Not at all','Some days','Most days','Nearly every day'];
+const BACKS=['Student life','Corporate work','LGBTQ+ affirming','First-gen / small-town'];
+const AVG=0.68, W={problem:35,style:25,results:20,soft:10,avail:10};
+const HOURS=[9,11,14,17,19,21];
+function prng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const PEOPLE=[['Ananya Rao','F'],['Kabir Mehta','M'],['Meera Iyer','F'],['Rohan Das','M'],['Sana Qureshi','F'],['Arjun Nair','M'],['Ishita Banerjee','F'],['Vikram Joshi','M'],['Nandini Pillai','F'],['Farhan Ali','M'],['Priya Kulkarni','F'],['Aditya Menon','M'],['Tara Sen','F'],['Rahul Verma','M'],['Lakshmi Reddy','F'],['Neha Kapoor','F'],['Siddharth Rao','M'],['Deepa Krishnan','F'],['Karan Malhotra','M'],['Aisha Khan','F'],['Varun Shetty','M'],['Pooja Deshmukh','F'],['Manish Gupta','M'],['Shreya Bhat','F'],['Nikhil Jain','M'],['Revathi Subramanian','F'],['Amit Chatterjee','M'],['Zoya Mirza','F'],['Harish Gowda','M'],['Kavya Menon','F']];
+const REG=['Hindi','Tamil','Hindi','Bengali','Hindi','Kannada','Marathi','Hindi','Telugu','Hindi','Malayalam','Hindi'];
+const COLORS=['#3d8a2a','#a87f3f','#6f8fb5','#d94a72','#5a6b3a','#8a5a9e'];
+const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const NOW=new Date();NOW.setMinutes(0,0,0);
+const hoursFrom=(d,h)=>{const x=new Date(NOW);x.setHours(h,0,0,0);x.setDate(x.getDate()+d);return (x-Date.now())/36e5};
+function buildT(){return PEOPLE.map(([name,g],i)=>{
+  const r=prng(1000+i*77);
+  const pick=(arr,n)=>{const a=arr.slice(),o=[];while(o.length<n&&a.length)o.push(a.splice(Math.floor(r()*a.length),1)[0]);return o};
+  const langs=new Set();if(i%7!==3)langs.add('English');langs.add(REG[i%REG.length]);if(r()<.3)langs.add('Hindi');if(langs.size===1&&r()<.5)langs.add('English');
+  const modes=['chat'];if(r()<.78)modes.unshift('video');if(r()<.7)modes.push('call');
+  const clinical=r()<.38;const ids=CONCERNS.map(c=>c[0]);
+  const trained=pick(ids,2+Math.floor(r()*3));
+  const claims=[...new Set([...trained,'anx','work','rel',...pick(ids,2)])];
+  const style=[0,0,0,0].map(()=>1+Math.floor(r()*5));
+  const selfStyle=style.map(v=>clamp(v+(r()<.5?0:(r()<.5?1:-1)),1,5));
+  const isNew=i%5===2;const total=isNew?3+Math.floor(r()*9):25+Math.floor(r()*115);const q=.5+r()*.35;
+  const cases={},res={};
+  claims.forEach(c=>{const share=trained.includes(c)?.6/trained.length:.4/(claims.length-trained.length);cases[c]=Math.max(0,Math.round(total*share*(0.6+r()*.8)));res[c]=clamp(q+(trained.includes(c)?.08:-.06)+(r()-.5)*.14,.2,.95)});
+  const cap=6+Math.floor(r()*7);const load=i%9===4?cap:Math.floor(r()*(cap+1)*.95);
+  const first=[3,6,10,15,22,30,40,52,64,80,110,150][Math.floor(r()*12)];
+  const open=new Set();for(let d=0;d<7;d++)HOURS.forEach((h,k)=>{const hf=hoursFrom(d,h);if(hf>=first-1&&r()<.55)open.add(d+'-'+h)});
+  return {id:'t'+i,name,g,clinical,title:clinical?'Clinical Psychologist':(r()<.5?'Counselling Psychologist':'Counsellor'),
+    langs:[...langs],modes,trained,claims,style,selfStyle,isNew,total,cases,res,
+    s2:clamp(.5+q*.42+(r()-.5)*.06,.4,.95),drop:clamp(.36-q*.25+(r()-.5)*.06,.05,.4),fit:clamp(3+q*1.9+(r()-.5)*.3,1,5),
+    cap,load,open,age:['25–35','35–50','50+'][Math.floor(r()*3)],backs:pick(BACKS,1+Math.floor(r()*2)),
+    color:COLORS[i%COLORS.length],years:isNew?1+Math.floor(r()*2):3+Math.floor(r()*14),
+    bio:`I work with ${trained.slice(0,2).map(c=>CL[c].toLowerCase()).join(' and ')}. ${style[0]<=2?'Sessions with me are practical: we set small goals and try tools between sessions.':style[0]>=4?'Sessions with me are a calm space to talk things through and understand what you feel.':'I mix practical tools with space to talk things through.'}`};
+})}
+let T=buildT();let TX=Object.fromEntries(T.map(t=>[t.id,t]));
+function openSlots(t){const out=[];for(let d=0;d<7;d++)HOURS.forEach(h=>{const hf=hoursFrom(d,h);if(hf>0.5&&t.open.has(d+'-'+h))out.push({d,h,hf})});return out}
+function nextH(t){const s=openSlots(t);return s.length?s[0].hf:999}
+function slotLabel(d,h){const x=new Date(NOW);x.setDate(x.getDate()+d);x.setHours(h);const time=x.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}).replace(':00','');
+  const day=d===0?(h>=17?'Tonight':'Today'):d===1?'Tomorrow':x.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});return day+', '+time}
+function soonText(h){return h<=12?'Free today':h<=36?'Free tomorrow':h<=72?'Free in 2–3 days':h<900?'Free this week':'No free slots'}
+
+/* ======================= STATE ======================= */
+function blankProfile(){return {concerns:[],mood:[null,null,null,null],safety:null,safetyAns:null,style:[3,3,3,3],styleSet:[false,false,false,false],matters:[false,false,false,false],lang:'English',mode:'video',gender:'any',backs:[]}}
+const SAMPLE={concerns:['exams','low','anx'],mood:[2,1,2,1],safety:'no',safetyAns:'no',style:[1,1,3,1],styleSet:[true,true,true,true],matters:[true,false,false,false],lang:'Hindi',mode:'video',gender:'any',backs:['Student life']};
+function fresh(){return {role:'client',
+  c:{screen:'home',tab:'home',step:1,profile:blankProfile(),results:null,view:null,slot:null,share:true,
+     bk:null, /* {tid, d, h, n (next session number), done} */
+     fit:{},fitLog:[],moodLog:[],moodDraft:null,exclude:[],switching:false,switchReason:null,crisis:false,past:[]},
+  t:{view:'today',client:null,me:null,notes:{}},
+  events:[] /* shared: things the therapist side should see */}}
+let S=fresh();
+
+/* ======================= ENGINE (hidden from users) ======================= */
+const sev=p=>{const tot=p.mood.reduce((a,b)=>a+(b??0),0);return {tot,band:tot>=8?'high':tot>=4?'moderate':'mild'}};
+const blendRes=(t,c)=>{const n=t.cases[c]||0;if(!n)return {v:AVG,n:0};const w=Math.min(n,15)/15;return {v:w*t.res[c]+(1-w)*AVG,n,raw:t.res[c]}};
+const provenRaw=t=>.5*t.s2+.25*(1-t.drop)+.25*((t.fit-1)/4);
+const availPts=h=>h<=12?1:h<=36?.7:h<=72?.4:.15;
+function runMatch(p,exclude=[]){
+  const high=sev(p).band==='high'||p.safety==='yes';
+  const F=[t=>t.langs.includes(p.lang),t=>!high||t.clinical,(t,r)=>r.mode||t.modes.includes(p.mode),(t,r)=>r.prefs||p.gender==='any'||t.g===p.gender, /* a stated gender preference is a must-have; relaxed only as a last resort */(t,r)=>nextH(t)<=(r.time?168:72),t=>t.load<t.cap,t=>!exclude.includes(t.id)];
+  const order=['time','mode','prefs'];let relax={},relaxed=[],pass;
+  for(let k=0;k<=3;k++){pass=T.filter(t=>F.every(f=>f(t,relax)));if(pass.length>=3||k===3)break;relax[order[k]]=true;relaxed.push(order[k])}
+  const cw=[.5,.3,.2].slice(0,p.concerns.length||1),cs=cw.reduce((a,b)=>a+b,0),alpha=.45;
+  const scored=pass.map(t=>{
+    let pf=0;p.concerns.forEach((c,i)=>{const tr=t.trained.includes(c)?1:t.claims.includes(c)?.35:0;pf+=cw[i]/cs*((1-alpha)*tr+alpha*blendRes(t,c).v)});
+    const mw=p.matters.map(m=>m?3:1);let gap=0,ws=0;p.style.forEach((u,i)=>{gap+=mw[i]*Math.abs(u-t.style[i]);ws+=mw[i]*4});
+    const w=Math.min(t.total,15)/15;const pr=w*provenRaw(t)+(1-w)*AVG;
+    const nice=[];p.backs.forEach(b=>nice.push(t.backs.includes(b)));
+    const soft=nice.length?nice.filter(Boolean).length/nice.length:1;
+    let total=pf*W.problem+(1-gap/ws)*W.style+pr*W.results+soft*W.soft+availPts(nextH(t))*W.avail;
+    if(t.load/t.cap>=.8)total-=5;else if(t.isNew)total+=3;
+    return {t,total};
+  }).sort((a,b)=>(p.gender!=='any'?(b.t.g===p.gender)-(a.t.g===p.gender):0)||b.total-a.total); /* preferred gender always ranks first */
+  return {top:scored.slice(0,3),relaxed,high,gender:p.gender};
+}
+function whyList(t,p){
+  const o=[],c0=p.concerns[0],tr=p.concerns.filter(c=>t.trained.includes(c));
+  if(c0&&t.trained.includes(c0))o.push(`Helps people with ${CL[c0].toLowerCase()}`);
+  else if(tr.length)o.push(`Helps people with ${CL[tr[0]].toLowerCase()}`);
+  let best=0,bg=9;p.style.forEach((u,i)=>{const g=Math.abs(u-t.style[i])-(p.matters[i]?.5:0);if(g<bg){bg=g;best=i}});
+  const v=p.style[best];o.push(v<=2?STYLEWHY[best][0]:v>=4?STYLEWHY[best][1]:'Flexible in how they work with you');
+  const b=c0?blendRes(t,c0):{n:0};
+  if(b.n>=15&&b.raw>=.6)o.push(`People like you often feel better with ${t.g==='F'?'her':'him'}`);
+  else if(t.total>=15&&t.s2>=.7)o.push('Clients often keep coming back');
+  else if(t.isNew)o.push('New here, with fresh energy');
+  return o.slice(0,3);
+}
+
+/* ======================= HELPERS ======================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+const ini=n=>n.split(' ').map(x=>x[0]).join('').slice(0,2);
+const first=n=>n.split(' ')[0];
+const pct=v=>Math.round(v*100)+'%';
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast._);toast._=setTimeout(()=>t.hidden=true,2600)}
+const moodScore=m=>m.reduce((a,b)=>a+(b??0),0)*2; /* short check scaled to PHQ-9 range 0–24 */
+function chartSVG(series,{h=170,showBand=true}={}){
+  if(!series.length)return '';
+  const xs=series.map(s=>s.s),max=Math.max(6,...xs);const X=v=>36+(v-1)/(max-1||1)*(480-36-20),Y=v=>12+(24-v)*((h-40)/24);
+  const b0=series[0].v;
+  return `<div class="svgwrap"><svg viewBox="0 0 480 ${h}" role="img" aria-label="Mood score by session, lower is better">
+   ${[0,6,12,18,24].map(v=>`<line x1="36" x2="460" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="28" y="${Y(v)+4}" font-size="11" text-anchor="end" fill="var(--muted)">${v}</text>`).join('')}
+   ${showBand&&b0>=5?`<rect x="36" y="${Y(b0-5)}" width="424" height="${Y(0)-Y(b0-5)}" fill="var(--lime)" opacity=".2"/><text x="456" y="${Y(b0-5)+13}" font-size="10.5" text-anchor="end" fill="var(--muted)">5+ points better</text>`:''}
+   <polyline points="${series.map(s=>X(s.s)+','+Y(s.v)).join(' ')}" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linejoin="round"/>
+   ${series.map(s=>`<circle cx="${X(s.s)}" cy="${Y(s.v)}" r="5" fill="var(--green)"/><text x="${X(s.s)}" y="${Y(s.v)-9}" font-size="11.5" text-anchor="middle" font-weight="600" fill="var(--ink)">${s.v}</text><text x="${X(s.s)}" y="${h-6}" font-size="11" text-anchor="middle" fill="var(--muted)">S${s.s}</text>`).join('')}
+  </svg></div>`}
+const ICON={home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/></svg>',sessions:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>',progress:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18l5-6 4 3 7-9"/></svg>',help:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-8-5-8-11a4.5 4.5 0 018-3 4.5 4.5 0 018 3c0 6-8 11-8 11z"/></svg>'};
+
+/* ======================= ROOT ======================= */
+function render(){
+  $('#roleSeg').innerHTML=[['client','Client app'],['therapist','Therapist app']].map(([k,l])=>`<button data-act="role" data-v="${k}" aria-pressed="${S.role===k}">${l}</button>`).join('');
+  $('#view').innerHTML=S.role==='client'?clientApp():therapistApp();
+  if(S.role==='client'&&S.c.screen==='matching')setTimeout(()=>{if(S.c.screen==='matching'){S.c.screen='matches';render()}},matchMedia('(prefers-reduced-motion: reduce)').matches?300:1900);
+}
+
+/* ======================= CLIENT APP ======================= */
+function clientApp(){
+  const c=S.c;const scr=CS[c.screen]||CS.home;
+  const showTabs=!['checkin','crisis','matching','room','fit','mood'].includes(c.screen);
+  return `<div class="phone"><div class="pbody">${scr()}</div>${showTabs?`<nav class="tabbar" aria-label="Client app">${[['home','Home'],['sessions','Sessions'],['progress','Progress'],['help','Get help']].map(([k,l])=>`<button data-act="ctab" data-v="${k}" ${c.tab===k&&['home','sessions','progress','help'].includes(c.screen)?'aria-current="page"':''}>${ICON[k]}${l}</button>`).join('')}</nav>`:''}</div>`;
+}
+const back=(to,label='Back')=>`<button class="iconbtn" data-act="cgo" data-to="${to}" aria-label="${label}">←</button>`;
+const CS={
+ home:()=>{const c=S.c;if(c.bk)return CS.dash();return `
+   <div class="phead"><div><span class="muted small">Hi Riya,</span><h2>How are you today?</h2></div><div class="avatar" style="background:var(--green-deep)">R</div></div>
+   <div class="blob g-pink" style="display:grid;gap:14px;min-height:320px;align-content:end">
+     <h1 style="color:#fff">Let’s find someone who gets you.</h1>
+     <p style="color:#fff;opacity:.9" class="small">3 minutes · free · private</p>
+     <button class="btn white block" data-act="startcheck">Start</button>
+   </div>
+   <div class="tile row between"><div><b class="small">Need to talk now?</b><p class="tiny muted">Someone is here, 24×7.</p></div><button class="btn ghost sm" data-act="ctab" data-v="help">Talk now</button></div>
+   <button class="link" data-act="usesample" style="justify-self:center">Prototype: use sample answers</button>`},
+ checkin:()=>{const c=S.c,p=c.profile,st=c.step;
+   const head=`<div class="phead">${st===1?back('home','Close'):`<button class="iconbtn" data-act="cstep" data-v="${st-1}" aria-label="Back">←</button>`}<div class="progress" style="flex:1;max-width:180px">${[1,2,3,4].map(i=>`<i class="${i<=st?'on':''}"></i>`).join('')}</div><span style="width:38px"></span></div>`;
+   if(st===1)return head+`<div><h2>What’s been on your mind?</h2><p class="small muted">Pick up to 3.</p></div>
+     <div class="choice">${CONCERNS.map(([id,l])=>{const r=p.concerns.indexOf(id);return `<button class="chip" data-act="concern" data-id="${id}" aria-pressed="${r>=0}">${l}${r>=0?`<span class="rank">${r+1}</span>`:''}</button>`}).join('')}</div>
+     <button class="btn block" data-act="cstep" data-v="2" ${p.concerns.length?'':'disabled'}>Next</button>`;
+   if(st===2)return head+`<div><h2>How have the last 2 weeks felt?</h2><p class="small muted">There’s no wrong answer.</p></div>
+     ${MOODQ.map((q,i)=>`<div class="q"><b class="small">${q}</b><div class="scale four">${MOODA.map((a,v)=>`<button data-act="mood" data-i="${i}" data-v="${v}" aria-pressed="${p.mood[i]===v}">${a}</button>`).join('')}</div></div>`).join('')}
+     <div class="safe"><span class="tiny muted">We gently ask everyone this, so we can support you well.</span>
+       <b class="small">Have you had thoughts of not wanting to be here, or of hurting yourself?</b>
+       <div class="scale">${[['no','No'],['some','Sometimes'],['often','Often']].map(([v,l])=>`<button data-act="safety" data-v="${v}" aria-pressed="${p.safetyAns===v}">${l}</button>`).join('')}</div>
+       <span class="tiny muted">Your answer stays private.</span></div>
+     <button class="btn block" data-act="moodnext" ${p.mood.every(v=>v!==null)&&p.safety?'':'disabled'}>Next</button>`;
+   if(st===3)return head+`<div><h2>How would you like your therapist to be?</h2><p class="small muted">Tap what feels right. Skip any you’re unsure about.</p></div>
+     ${STYLEQ.map((s,i)=>{const v=p.styleSet[i]?p.style[i]:null;return `<div class="pref"><b class="small">${s.q}</b>
+       <div class="opts" role="group" aria-label="${esc(s.q)}"><button data-act="pref" data-i="${i}" data-v="1" aria-pressed="${v===1}">${s.a[0]}</button><button class="either" data-act="pref" data-i="${i}" data-v="3" aria-pressed="${v===3}">Either</button><button data-act="pref" data-i="${i}" data-v="5" aria-pressed="${v===5}">${s.a[1]}</button></div>
+       ${v&&v!==3?`<button class="heart" data-act="matter" data-i="${i}" aria-pressed="${p.matters[i]}">${p.matters[i]?'♥':'♡'} This really matters to me</button>`:''}</div>`}).join('')}
+     <button class="btn block" data-act="cstep" data-v="4">Next</button>`;
+   return head+`<div><h2>Almost there</h2></div>
+     <div class="field"><label class="lbl" for="lang">Language</label><select id="lang" data-bind="lang">${LANGS.map(l=>`<option ${p.lang===l?'selected':''}>${l}</option>`).join('')}</select></div>
+     <div class="field"><span class="lbl">Talk by</span><div class="scale">${MODES.map(([v,l])=>`<button data-act="mode" data-v="${v}" aria-pressed="${p.mode===v}">${l}</button>`).join('')}</div></div>
+     <div class="field"><span class="lbl">Would you prefer to talk to…</span><div class="scale">${[['any','Anyone'],['F','A woman'],['M','A man']].map(([v,l])=>`<button data-act="gender" data-v="${v}" aria-pressed="${p.gender===v}">${l}</button>`).join('')}</div></div>
+     <div class="field"><span class="lbl">Someone who gets (optional)</span><div class="scale">${BACKS.map(b=>`<button data-act="back" data-v="${esc(b)}" aria-pressed="${p.backs.includes(b)}">${b}</button>`).join('')}</div></div>
+     <button class="btn block" data-act="findmatch">Find my matches</button>`},
+ crisis:()=>`<div class="phead">${back('checkin')}<span></span></div>
+   <div class="blob g-pink" style="display:grid;gap:14px;min-height:320px;align-content:end">
+     <h1 style="color:#fff">Thank you for trusting us with this. You’re not alone.</h1>
+     <button class="btn white block" data-act="crisiscall">Talk to someone now</button></div>
+   ${S.c.crisis==='called'?'<div class="callout">Someone is joining you. Usually under 5 minutes.</div>':''}
+   <div class="tile stack" style="gap:4px"><b>Tele-MANAS · 14416</b><span class="small muted">Free, 24×7, in your language.</span></div>
+   <button class="btn ghost block" data-act="cstep" data-v="3">I’m safe, keep going</button>`,
+ matching:()=>`<div class="room"><div class="blob g-orange" style="width:160px;height:160px;border-radius:50%;padding:0"></div><h2>Finding people for you…</h2><p class="small muted">Just a moment.</p></div>`,
+ matches:()=>{const c=S.c,r=c.results,p=c.profile;return `
+   <div class="phead">${c.bk?back('home'):back('checkin','Edit answers')}<span></span></div>
+   <div><h2>${c.switching?'Here are 3 new people':'3 people picked for you'}</h2><p class="small muted">${c.switching?'Your answers came with you.':'Take your time.'}</p></div>
+   ${r.high?'<div class="callout rose small">These are psychologists with extra clinical training.</div>':''}
+   ${r.relaxed.includes('prefs')&&r.gender!=='any'?(n=>`<div class="callout small">${n?`Only ${n===1?'one':n} ${r.gender==='F'?(n===1?'woman':'women'):(n===1?'man':'men')} who fit${n===1?'s':''} you ${n===1?'is':'are'} free right now. We’ve put ${n===1?'her':'them'} first and added others you might like.`:`No ${r.gender==='F'?'women':'men'} who speak ${esc(p.lang)} are free right now. ${r.top.length>1?'Here are others':'Here’s someone else'} you might like. We’ll let you know when someone frees up.`}</div>`)(r.top.filter(s=>s.t.g===r.gender).length):r.relaxed.length?'<div class="callout small">We widened the dates a little to find good people.</div>':''}
+   ${r.top.map((s,i)=>{const t=s.t;return `<article class="mcard ${i===0?'best':''}">
+     <div class="row" style="flex-wrap:nowrap"><div class="avatar" style="background:${t.color}">${ini(t.name)}</div><div style="min-width:0;flex:1"><b>${esc(t.name)}</b><div class="tiny muted">${t.title} · ${t.langs.slice(0,2).join(', ')}</div></div>${i===0?'<span class="tag lime">Best fit</span>':''}</div>
+     <ul class="why">${whyList(t,p).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+     <div class="row between"><span class="tag">${soonText(nextH(t))}</span><button class="btn sm" data-act="viewt" data-id="${t.id}">See ${esc(first(t.name))}</button></div>
+   </article>`}).join('')||'<div class="tile">No one is free right now. We’ll reach out within a day.</div>'}
+   <button class="link" data-act="cgo" data-to="checkin" style="justify-self:center">None feel right?</button>`},
+ profile:()=>{const c=S.c,t=TX[c.view],slots=openSlots(t).slice(0,4);return `
+   <div class="phead">${back('matches')}<span></span></div>
+   <div class="row" style="flex-wrap:nowrap"><div class="avatar lg" style="background:${t.color}">${ini(t.name)}</div><div><h2>${esc(t.name)}</h2><span class="small muted">${t.title} · ${t.years} yrs</span></div></div>
+   <p class="small">${esc(t.bio)}</p>
+   <ul class="why">${whyList(t,c.profile).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+   <div class="tile stack"><span class="lbl">How ${t.g==='F'?'she':'he'} works</span>
+     ${SLIDERS.map(([l,r],i)=>`<div class="style-ind"><div class="row between tiny"><span>${l}</span><span>${r}</span></div><div class="bar"><i style="left:${(t.style[i]-1)*25}%"></i></div></div>`).join('')}</div>
+   <div class="tags">${t.trained.map(x=>`<span class="tag green">✓ ${CL[x]}</span>`).join('')}${t.langs.map(l=>`<span class="tag">${l}</span>`).join('')}</div>
+   <div class="stack" style="gap:8px" id="book"><span class="lbl">Pick a time</span>
+     <div class="slotgrid">${slots.map(s=>`<button class="slot" data-act="slot" data-v="${s.d}-${s.h}" aria-pressed="${c.slot===s.d+'-'+s.h}">${slotLabel(s.d,s.h)}</button>`).join('')||'<span class="small muted">No free times this week.</span>'}</div></div>
+   <label class="tile check" style="color:var(--ink);align-items:flex-start"><input type="checkbox" id="share" data-bind="share" ${c.share?'checked':''}> <span class="small">Share my answers with ${esc(first(t.name))}, so I don’t have to repeat myself</span></label>
+   <button class="btn block" data-act="book" ${c.slot?'':'disabled'}>Book</button>`},
+ booked:()=>{const c=S.c,t=TX[c.bk.tid];return `
+   <div class="blob g-green" style="display:grid;gap:10px;min-height:280px;align-content:end;margin-top:6px">
+     <h1 style="color:#fff">You’re all set.</h1><p style="color:#fff">${esc(first(t.name))} · ${slotLabel(c.bk.d,c.bk.h)}</p></div>
+   <ul class="why">
+     <li>${c.share?`${esc(first(t.name))} will read your answers first`:'Share only what you want to'}</li>
+     <li>We’ll check in with you after</li>
+     <li>You can switch anytime, no questions asked</li></ul>
+   <button class="btn block" data-act="cgo" data-to="home">Done</button>`},
+ dash:()=>{const c=S.c,t=TX[c.bk.tid],n=c.bk.n,ms=c.moodLog;
+   const pendingFit=c.bk.pending==='fit',pendingMood=c.bk.pending==='mood';
+   return `<div class="phead"><div><span class="muted small">Hi Riya,</span><h2>Good to see you</h2></div><div class="avatar" style="background:var(--green-deep)">R</div></div>
+   ${pendingFit?`<div class="blob g-sky" style="display:grid;gap:10px"><h2 style="color:#fff">How did it feel with ${esc(first(t.name))}?</h2><button class="btn white" data-act="cgo" data-to="fit">Tell us · 20 sec</button></div>`:''}
+   ${pendingMood?`<div class="blob g-sky" style="display:grid;gap:10px"><h2 style="color:#fff">How have you been lately?</h2><button class="btn white" data-act="cgo" data-to="mood">Quick check-in</button></div>`:''}
+   ${c.bk.offerSwitch?`<div class="callout stack"><b>Still not feeling right? That’s okay.</b><span class="small">Switching is free. ${esc(first(t.name))} won’t be told why.</span><div class="row"><button class="btn sm" data-act="cgo" data-to="switch">Find someone new</button><button class="btn ghost sm" data-act="keep">Keep going</button></div></div>`:''}
+   <div class="blob g-orange" style="display:grid;gap:14px">
+     <span class="lbl">Next session</span>
+     <div class="row" style="flex-wrap:nowrap"><div class="avatar" style="background:rgba(255,255,255,.3)">${ini(t.name)}</div><div><b style="font-size:17px">${esc(t.name)}</b><div class="small" style="opacity:.9">${slotLabel(c.bk.d,c.bk.h)} · ${c.profile.mode}</div></div></div>
+     <button class="btn white block" data-act="join">Join</button>
+   </div>
+   ${c.fitLog.some(f=>f.low)&&!c.bk.offerSwitch?`<div class="tile small">Thanks for sharing. We’ve helped ${esc(first(t.name))} adjust, privately.</div>`:''}
+   <div class="tile row between"><div><div class="dotnum" style="font-size:36px">${n-1}</div><span class="tiny muted">sessions done</span></div><button class="link" data-act="ctab" data-v="progress">Your progress</button></div>
+   <button class="link" data-act="cgo" data-to="switch" style="justify-self:start">Change therapist</button>`},
+ room:()=>{const c=S.c,t=TX[c.bk.tid];return `<div class="blob g-green room" style="min-height:560px">
+   <div class="avatar lg" style="background:rgba(255,255,255,.25);width:110px;height:110px;font-size:34px">${ini(t.name)}</div>
+   <div><h2 style="color:#fff">${esc(t.name)}</h2><p class="small" style="color:#fff;opacity:.9">In session</p></div>
+   <div class="dotnum" style="font-size:44px;color:#fff">50:00</div>
+   <button class="btn white" data-act="endsession">End session</button>
+   <p class="tiny" style="color:#fff;opacity:.85">Prototype: simulated call</p></div>`},
+ fit:()=>{const c=S.c,t=TX[c.bk.tid];const Q=[['heard','I felt heard'],['goals','We talked about what matters to me'],['approach','Their way suits me'],['overall','It feels like a good fit']];
+   return `<div class="phead">${back('home','Later')}<span></span></div>
+   <div><h2>How did it feel?</h2><p class="small muted">Only we see this, not ${esc(first(t.name))}.</p></div>
+   ${Q.map(([k,q])=>`<div class="q"><b class="small">${q}</b><div class="scale five">${[1,2,3,4,5].map(v=>`<button data-act="fit" data-k="${k}" data-v="${v}" aria-pressed="${c.fit[k]===v}" aria-label="${v} of 5">${v}</button>`).join('')}</div><div class="row between tiny muted"><span>Not really</span><span>Very much</span></div></div>`).join('')}
+   <button class="btn block" data-act="fitsubmit" ${Object.keys(c.fit).length===4?'':'disabled'}>Send</button>`},
+ fitthanks:()=>{const c=S.c,t=TX[c.bk.tid],last=c.fitLog[c.fitLog.length-1];return `
+   <div class="blob ${last.low?'g-sky':'g-green'}" style="display:grid;gap:10px;min-height:240px;align-content:end;margin-top:6px">
+   <h1 style="color:#fff">${last.low?'Thank you for being honest.':'So glad it’s going well.'}</h1></div>
+   <p class="small">${last.low?`We’ll help ${esc(first(t.name))} adjust. Your answers stay private.`:'Your next session is booked.'}</p>
+   ${last.low?`<button class="link" style="justify-self:start" data-act="cgo" data-to="switch">I’d rather try someone else</button>`:''}
+   <button class="btn block" data-act="cgo" data-to="home">Done</button>`},
+ mood:()=>{const c=S.c,m=c.moodDraft;
+   return `<div class="phead">${back('home','Later')}<span></span></div>
+   <div><h2>How have the last 2 weeks felt?</h2><p class="small muted">Just a quick check-in.</p></div>
+   ${MOODQ.map((q,i)=>`<div class="q"><b class="small">${q}</b><div class="scale four">${MOODA.map((a,v)=>`<button data-act="mood2" data-i="${i}" data-v="${v}" aria-pressed="${m[i]===v}">${a}</button>`).join('')}</div></div>`).join('')}
+   <button class="btn block" data-act="moodsubmit" ${m.every(v=>v!==null)?'':'disabled'}>Save</button>`},
+ switch:()=>{const c=S.c,t=TX[c.bk.tid];return `<div class="phead">${back('home')}<span></span></div>
+   <div><h2>Let’s find a better fit</h2><p class="small muted">It’s free. ${esc(first(t.name))} won’t be told why.</p></div>
+   <div class="field"><span class="lbl">What would help? (optional)</span><div class="choice">${[['tools','More practical tips'],['explore','More space to talk'],['lead','Let me lead'],['gentle','Gentler'],['time','Other times'],['other','Not sure']].map(([k,l])=>`<button class="chip" style="min-height:0" data-act="reason" data-v="${k}" aria-pressed="${c.switchReason===k}">${l}</button>`).join('')}</div></div>
+   <button class="btn block" data-act="doswitch">Show me new people</button>`},
+ sessions:()=>{const c=S.c;if(!c.bk)return `<h2>Sessions</h2><div class="tile small muted">Nothing here yet.</div>`;const t=TX[c.bk.tid];return `<h2>Sessions</h2>
+   <div class="tile"><div class="listrow"><div class="avatar" style="background:${t.color}">${ini(t.name)}</div><div style="flex:1"><b class="small">${esc(t.name)}</b><div class="tiny muted">${slotLabel(c.bk.d,c.bk.h)}</div></div><span class="tag lime">Next</span></div>
+   ${c.past.slice().reverse().map(p=>`<div class="listrow"><div class="avatar" style="background:${TX[p.tid].color};opacity:.6">${ini(TX[p.tid].name)}</div><div style="flex:1"><b class="small">${esc(TX[p.tid].name)}</b><div class="tiny muted">Session ${p.n}</div></div><span class="tag">Done</span></div>`).join('')}</div>`},
+ progress:()=>{const c=S.c,ms=c.moodLog;const d=ms.length>1?ms[0].v-ms[ms.length-1].v:null;return `<h2>Your progress</h2>
+   ${ms.length?`<div class="blob ${d!==null&&d>=5?'g-green':'g-sky'}" style="display:grid;gap:6px"><h2 style="color:#fff">${d===null?'This is where you started.':d>=5?'You’re feeling better. That’s real progress.':'Change takes time. Showing up counts.'}</h2></div>
+     <div class="tile stack"><span class="lbl">Mood · lower is better</span>${chartSVG(ms)}</div>`:'<div class="tile small muted">Your progress will show up here.</div>'}
+   <div class="tile row between"><div><div class="dotnum" style="font-size:36px">${c.past.length}</div><span class="tiny muted">sessions done</span></div></div>`},
+ help:()=>`<h2>You’re not alone</h2>
+   <div class="blob g-pink stack"><h2 style="color:#fff">Talk to someone in minutes</h2><button class="btn white" data-act="crisiscall2">Talk now</button></div>
+   <div class="tile stack" style="gap:4px"><b>Tele-MANAS · 14416</b><span class="small muted">Free, 24×7, in your language.</span></div>
+   <div class="tile stack" style="gap:4px"><b>Emergency · 112</b><span class="small muted">If you’re in danger right now.</span></div>`
+};
+CS.dashboard=CS.dash;
+
+/* ======================= THERAPIST APP ======================= */
+const SAMPLE_CLIENTS=[
+ {id:'c1',name:'Arjun',meta:'21 · student',concerns:['exams','anx'],sessions:4,mood:[{s:1,v:14},{s:3,v:17}],next:[0,17],mode:'video',lang:'English',style:'Practical tools · Guide me',alert:'worse'},
+ {id:'c2',name:'Meghna',meta:'29 · employee',concerns:['work','sleep'],sessions:6,mood:[{s:1,v:18},{s:3,v:13},{s:6,v:9}],next:[0,19],mode:'call',lang:'Hindi',style:'Explore feelings'},
+ {id:'c3',name:'Sahil',meta:'24 · employee',concerns:['career','low'],sessions:2,mood:[{s:1,v:11}],next:[1,11],mode:'video',lang:'English',style:'Let me lead'},
+ {id:'c4',name:'Fatima',meta:'20 · student',concerns:['family','lonely'],sessions:8,mood:[{s:1,v:16},{s:3,v:12},{s:6,v:8},{s:8,v:6}],next:[2,14],mode:'chat',lang:'Hindi',style:'Be gentle'}];
+function me(){return S.c.bk?TX[S.c.bk.tid]:TX[S.t.me||'t0']}
+function myClients(){const t=me(),list=SAMPLE_CLIENTS.map(x=>({...x}));const c=S.c;
+  if(c.bk&&c.bk.tid===t.id){const p=c.profile;list.unshift({id:'riya',name:'Riya',meta:'20 · student',concerns:p.concerns,sessions:c.bk.n-1,mood:c.moodLog,next:[c.bk.d,c.bk.h],mode:p.mode,lang:p.lang,real:true,isNew:c.bk.n===1,
+    style:p.style.map((v,i)=>v<=2?STYLEQ[i].a[0]:v>=4?STYLEQ[i].a[1]:null).filter(Boolean).join(' · ')||'No strong preference',flag:p.safety==='yes',share:c.share,sev:sev(p)})}
+  const moved=S.events.filter(e=>e.type==='moved'&&e.tid===t.id);
+  return {list,moved};}
+function alertsFor(){const t=me(),out=[];const {list}=myClients();
+  S.events.filter(e=>e.tid===t.id&&e.type==='tip').forEach(e=>out.push({k:'lime',title:'Tip for your sessions with Riya',body:e.text,client:'riya',foot:'From Riya’s fit check. Her answers stay private.'}));
+  list.filter(x=>x.flag).forEach(x=>out.push({k:'rose',title:`${x.name} flagged a safety concern at check-in`,body:'Check in on safety at the start of session 1. Crisis support was offered when they answered.',client:x.id}));
+  list.filter(x=>x.alert==='worse'||(x.mood.length>1&&x.mood[x.mood.length-1].v-x.mood[0].v>=3)).forEach(x=>out.push({k:'rose',title:`${x.name}’s mood score is going up (worse)`,body:`${x.mood[0].v} → ${x.mood[x.mood.length-1].v} since session 1. Consider reviewing your approach together, or discussing whether a different therapist could help.`,client:x.id}));
+  S.events.filter(e=>e.type==='moved'&&e.tid===t.id).forEach(()=>out.push({k:'',title:'Riya has moved to another therapist',body:'Clients can switch for free at any time. No reason is shared. Your slot is open again.'}));
+  return out;}
+function therapistApp(){const t=me(),al=alertsFor();const v=S.t.view;
+  const nav=[['today','Today',al.length],['clients','Clients',0],['profile','My profile',0],['availability','Availability',0],['results','My results',0]];
+  return `<div class="tdash"><nav class="side" aria-label="Therapist app"><div class="me"><div class="avatar" style="background:${t.color}">${ini(t.name)}</div><div style="min-width:0"><b class="small">${esc(t.name)}</b><div class="tiny muted">${t.title}</div></div></div>
+    ${nav.map(([k,l,b])=>`<button data-act="tview" data-v="${k}" ${v===k||(v==='client'&&k==='clients')?'aria-current="page"':''}>${l}${b?`<span class="badge">${b}</span>`:''}</button>`).join('')}
+    ${S.c.bk?'':`<div class="tiny muted" style="padding:10px 12px">Signed in as a sample therapist. Book someone in the Client app to sign in as them.</div>`}
+  </nav><section class="tgrid">${TV[v]()}</section></div>`;}
+const TV={
+ today:()=>{const t=me(),{list}=myClients(),al=alertsFor();const today=list.filter(x=>x.next&&x.next[0]===0).sort((a,b)=>a.next[1]-b.next[1]);const upcoming=list.filter(x=>x.next&&x.next[0]>0).sort((a,b)=>a.next[0]-b.next[0]||a.next[1]-b.next[1]);
+   const fitAvg=t.fit;
+   return `<div class="row between"><div><span class="muted small">${NOW.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</span><h1>Good ${NOW.getHours()<12?'morning':NOW.getHours()<17?'afternoon':'evening'}, ${esc(first(t.name))}</h1></div></div>
+   <div class="kpis">
+     <div class="kpi"><span class="lbl">Sessions today</span><span class="dotnum">${today.length}</span></div>
+     <div class="kpi"><span class="lbl">New clients this week</span><span class="dotnum">${t.load}/${t.cap}</span><div class="dots">${Array.from({length:t.cap},(_,i)=>`<i class="${i<t.load?'on':''}"></i>`).join('')}</div></div>
+     <div class="kpi"><span class="lbl">Avg fit rating · 30 days</span><span class="dotnum">${fitAvg.toFixed(1)}</span><span class="tiny muted">out of 5, from client fit checks</span></div>
+     <div class="kpi"><span class="lbl">Need attention</span><span class="dotnum" style="color:${al.length?'var(--rose)':'inherit'}">${al.length}</span></div>
+   </div>
+   <div class="cols">
+    <div class="card stack"><div class="row between"><h3>Schedule</h3><span class="tiny muted">Today and next few days</span></div>
+     <div>${[...today,...upcoming].map(x=>`<div class="sched"><div><b class="small">${slotLabel(x.next[0],x.next[1]).split(', ')[1]}</b><div class="tiny muted">${x.next[0]===0?'Today':x.next[0]===1?'Tomorrow':slotLabel(x.next[0],x.next[1]).split(', ')[0]}</div></div>
+       <div style="min-width:0"><b class="small">${x.name}</b> <span class="tiny muted">· session ${x.sessions+1} · ${x.mode}</span><div class="tags" style="margin-top:4px">${x.isNew?'<span class="tag lime">New client</span>':''}${x.flag?'<span class="tag rose">Safety flag</span>':''}${x.concerns.slice(0,2).map(c=>`<span class="tag">${CL[c]}</span>`).join('')}</div></div>
+       <button class="btn ${x.isNew?'':'ghost'} sm" data-act="openclient" data-id="${x.id}">${x.isNew?'Read brief':'Open'}</button></div>`).join('')}</div></div>
+    <div class="card stack"><h3>Needs your attention</h3>
+     ${al.length?al.map(a=>`<div class="alert ${a.k}"><b class="small">${a.title}</b><span class="small">${a.body}</span>${a.foot?`<span class="tiny muted">${a.foot}</span>`:''}${a.client?`<button class="link" style="justify-self:start" data-act="openclient" data-id="${a.client}">Open client</button>`:''}</div>`).join(''):'<p class="small muted">Nothing right now.</p>'}</div>
+   </div>`},
+ clients:()=>{const {list,moved}=myClients();return `<div><h1>Clients</h1><p class="small muted">Mood score is the client’s check-in, repeated every 2–3 sessions. Lower is better.</p></div>
+   <div class="card"><div class="tbl"><table><thead><tr><th>Client</th><th>Working on</th><th class="num">Sessions</th><th>Mood trend</th><th>Status</th><th>Next</th></tr></thead><tbody>
+   ${list.map(x=>{const m=x.mood,d=m.length>1?m[m.length-1].v-m[0].v:null;const st=x.isNew?'<span class="tag lime">New</span>':d===null?'<span class="tag">Baseline only</span>':d<=-5?'<span class="tag green">Improving</span>':d>=3?'<span class="tag rose">Getting worse</span>':'<span class="tag amber">No clear change</span>';
+     return `<tr class="click" data-act="openclient" data-id="${x.id}" tabindex="0"><td><b>${x.name}</b><div class="tiny muted">${x.meta}</div></td><td class="small">${x.concerns.map(c=>CL[c]).join(', ')}</td><td class="num">${x.sessions}</td><td>${spark(m)}</td><td>${st}</td><td class="small">${slotLabel(x.next[0],x.next[1])}</td></tr>`}).join('')}
+   ${moved.map(()=>`<tr><td><b>Riya</b><div class="tiny muted">20 · student</div></td><td colspan="5" class="small muted">Moved to another therapist. No reason is shared.</td></tr>`).join('')}
+   </tbody></table></div></div>`},
+ client:()=>{const {list}=myClients();const x=list.find(c=>c.id===S.t.client);if(!x)return TV.clients();
+   const tips=x.real?S.events.filter(e=>e.type==='tip'&&e.tid===me().id):[];
+   return `<div class="row"><button class="btn ghost sm" data-act="tview" data-v="clients">← Clients</button></div>
+   <div class="row between"><div><h1>${x.name}</h1><span class="small muted">${x.meta} · ${x.lang} · ${x.mode} · ${x.sessions} session${x.sessions===1?'':'s'} so far</span></div>
+     <div class="tags">${x.isNew?'<span class="tag lime">New client</span>':''}${x.flag?'<span class="tag rose">Safety flag</span>':''}</div></div>
+   <div class="cols">
+    <div class="stack" style="gap:16px">
+     <div class="card stack"><h3>${x.isNew?'Brief before session 1':'Check-in summary'}</h3>
+      ${x.real&&!x.share?'<p class="small muted">Riya chose not to share her check-in answers. Only the safety answer is shared.</p>':`
+      <div class="stack" style="gap:10px">
+       <div><span class="lbl">Wants help with</span><div class="tags" style="margin-top:6px">${x.concerns.map((c,i)=>`<span class="tag ${i===0?'lime':''}">${i+1}. ${CL[c]}</span>`).join('')}</div></div>
+       <div><span class="lbl">How they like to be helped</span><p class="small" style="margin-top:4px">${x.style}</p></div>
+       ${x.sev?`<div><span class="lbl">Mood at check-in</span><p class="small" style="margin-top:4px">${x.mood[0]?x.mood[0].v:'—'}/24 · ${x.sev.band}</p></div>`:''}
+      </div>`}
+      ${x.flag?'<div class="alert rose"><b class="small">Safety: answered yes to the self-harm question</b><span class="small">Crisis support was offered at check-in. Please check in on safety first.</span></div>':''}
+     </div>
+     ${x.mood.length?`<div class="card stack"><div class="row between"><h3>Mood progress</h3><span class="tiny muted">Shared with the client</span></div>${chartSVG(x.mood)}</div>`:''}
+    </div>
+    <div class="stack" style="gap:16px">
+     ${tips.length?`<div class="card stack"><h3>Tips from fit checks</h3>${tips.map(e=>`<div class="alert lime"><span class="small">${e.text}</span><span class="tiny muted">After session ${e.session}</span></div>`).join('')}<p class="tiny muted">Clients rate each early session privately. You see a tip, never their answers.</p></div>`:''}
+     <div class="card stack"><h3>Private notes</h3><textarea id="note-${x.id}" rows="7" data-bind="note" data-id="${x.id}" placeholder="Only you can see these notes.">${esc(S.t.notes[x.id]||'')}</textarea></div>
+    </div>
+   </div>`},
+ profile:()=>{const t=me();return `<div><h1>My profile</h1><p class="small muted">This is what clients see, and what we use to suggest you.</p></div>
+   <div class="cols">
+    <div class="card stack"><h3>How you work</h3>
+     <div class="row small muted" style="gap:16px"><span class="row" style="gap:6px"><i class="mk self" aria-hidden="true"></i>Your answer</span><span class="row" style="gap:6px"><i class="mk client" aria-hidden="true"></i>How clients experience you</span></div>
+     ${SLIDERS.map(([l,r],i)=>`<div class="stack" style="gap:4px"><div class="row between small"><span>${l}</span><span>${r}</span></div>
+       <div class="track5" role="radiogroup" aria-label="Your answer: ${l} or ${r}">${[1,2,3,4,5].map(v=>`<button role="radio" aria-checked="${t.selfStyle[i]===v}" data-act="tself" data-i="${i}" data-v="${v}" aria-label="${v} of 5">${t.style[i]===v?'<i class="mk client"></i>':''}${t.selfStyle[i]===v?'<i class="mk self"></i>':''}</button>`).join('')}</div></div>`).join('')}
+     <p class="tiny muted">Tap to update your answer. Matching leans more on client feedback as it builds up.</p>
+    </div>
+    <div class="stack" style="gap:16px">
+     <div class="card stack"><h3>Training</h3><div class="tags">${t.claims.map(c=>t.trained.includes(c)?`<span class="tag green">✓ ${CL[c]}</span>`:(S.t.pending||[]).includes(c)?`<span class="tag amber">${CL[c]} · in review</span>`:`<button class="tag" style="border:0" data-act="verify" data-c="${c}">+ ${CL[c]} · add certificate</button>`).join('')}</div>
+      <p class="tiny muted">Only verified training counts fully when we suggest you for a concern. Areas you list without a certificate count less.</p></div>
+     <div class="card stack"><h3>Languages and session types</h3><div class="tags">${t.langs.map(l=>`<span class="tag">${l}</span>`).join('')}${t.modes.map(m=>`<span class="tag">${m}</span>`).join('')}</div></div>
+     <div class="card stack"><h3>Bio</h3><p class="small">${esc(t.bio)}</p></div>
+    </div></div>`},
+ availability:()=>{const t=me();const bk=S.c.bk&&S.c.bk.tid===t.id?S.c.bk:null;const nh=nextH(t);return `<div><h1>Availability</h1><p class="small muted">You’re suggested to new clients only when you have a free slot in the next 72 hours and room under your weekly cap.</p></div>
+   <div class="kpis"><div class="kpi"><span class="lbl">New clients per week</span><div class="stepper"><button data-act="cap" data-v="-1" aria-label="Fewer">−</button><span class="dotnum" style="font-size:30px">${t.cap}</span><button data-act="cap" data-v="1" aria-label="More">+</button></div><span class="tiny muted">${t.load} taken this week</span></div>
+    <div class="kpi"><span class="lbl">Shown to new clients?</span><span class="dotnum" style="font-size:30px;color:${nh<=72&&t.load<t.cap?'var(--good)':'var(--bad)'}">${nh<=72&&t.load<t.cap?'YES':'NO'}</span><span class="tiny muted">${t.load>=t.cap?'Weekly cap reached':nh>72?'No free slot in the next 72 hours':'Next free slot: '+soonText(nh).replace('Free ','').toLowerCase()}</span></div></div>
+   <div class="card stack"><div class="row between"><h3>Next 7 days</h3><span class="tiny muted">Tap to open or close a slot</span></div>
+    <div class="tbl"><div class="avail"><span></span>${HOURS.map(h=>`<span class="h">${(h%12)||12}${h<12?'am':'pm'}</span>`).join('')}
+     ${[0,1,2,3,4,5,6].map(d=>`<span class="d">${slotLabel(d,9).split(', ')[0].replace('Today','Today')}</span>${HOURS.map(h=>{const k=d+'-'+h,past=hoursFrom(d,h)<=0.5,isB=bk&&bk.d===d&&bk.h===h;return `<button class="cell ${isB?'booked':''}" data-act="cell" data-k="${k}" aria-pressed="${t.open.has(k)}" ${past||isB?'disabled':''} aria-label="${slotLabel(d,h)}">${isB?'Riya':t.open.has(k)?'Open':''}</button>`}).join('')}`).join('')}
+    </div></div></div>`},
+ results:()=>{const t=me();const ids=t.claims;return `<div><h1>My results</h1><p class="small muted">Only you and the clinical team see this. It’s adjusted for how severe clients were when they started.</p></div>
+   <div class="kpis"><div class="kpi"><span class="lbl">Come back for session 2</span><span class="dotnum">${pct(t.s2)}</span></div><div class="kpi"><span class="lbl">Stop early</span><span class="dotnum">${pct(t.drop)}</span></div><div class="kpi"><span class="lbl">Avg fit rating</span><span class="dotnum">${t.fit.toFixed(1)}</span></div><div class="kpi"><span class="lbl">Clients so far</span><span class="dotnum">${t.total}</span></div></div>
+   <div class="card stack"><h3>By concern</h3>
+    <div class="tbl"><table><thead><tr><th>Concern</th><th>Training</th><th class="num">Clients</th><th>Felt better</th><th>Status</th></tr></thead><tbody>
+    ${ids.map(c=>{const b=blendRes(t,c);return `<tr><td>${CL[c]}</td><td>${t.trained.includes(c)?'<span class="tag green">Verified</span>':'<span class="tag">Listed</span>'}</td><td class="num">${b.n}</td><td style="min-width:150px">${b.n?`<div class="row" style="flex-wrap:nowrap"><div class="meter" style="flex:1"><i style="width:${b.raw*100}%"></i></div><span class="small" style="width:38px;text-align:right">${pct(b.raw)}</span></div>`:'<span class="small muted">No clients yet</span>'}</td><td>${b.n>=15?'<span class="tag lime">Counts toward matching</span>':`<span class="tag">${15-b.n} more clients needed</span>`}</td></tr>`}).join('')}
+    </tbody></table></div>
+    <p class="tiny muted">“Felt better” means the client’s mood score dropped 5+ points by session 6. Until a concern has 15 clients, we use a platform average for it, so a few early cases can’t help or hurt you much.</p></div>`}
+};
+function spark(m){if(!m.length)return '<span class="tiny muted">—</span>';if(m.length===1)return `<span class="small">${m[0].v}</span>`;const xs=m.map(p=>p.v),W2=90,H2=26;const pts=m.map((p,i)=>`${4+i*(W2-8)/(m.length-1)},${H2-3-(p.v/24)*(H2-6)}`).join(' ');const d=xs[xs.length-1]-xs[0];
+  return `<svg viewBox="0 0 ${W2} ${H2}" width="${W2}" height="${H2}" aria-label="${xs.join(' to ')}"><polyline points="${pts}" fill="none" stroke="${d>=3?'var(--rose)':'var(--green)'}" stroke-width="2"/></svg> <span class="tiny muted">${xs[0]}→${xs[xs.length-1]}</span>`}
+
+/* ======================= EVENTS ======================= */
+function cgo(s){S.c.screen=s;if(['home','sessions','progress','help'].includes(s))S.c.tab=s;render();window.scrollTo({top:0})}
+function book(){const c=S.c,t=TX[c.view];const [d,h]=c.slot.split('-').map(Number);
+  if(c.bk){S.events.push({type:'moved',tid:c.bk.tid});const old=TX[c.bk.tid];old.load=Math.max(0,old.load-1)}
+  t.open.delete(c.slot);t.load+=1;c.bk={tid:t.id,d,h,n:1};c.fitLog=[];c.switching=false;
+  if(!c.moodLog.length)c.moodLog=[{s:1,v:moodScore(c.profile.mood)}];
+  cgo('booked')}
+document.addEventListener('click',e=>{
+  const a=e.target.closest('[data-act]');if(!a||a.disabled)return;const d=a.dataset,c=S.c,p=c.profile;
+  switch(d.act){
+   case 'role':S.role=d.v;render();window.scrollTo({top:0});break;
+   case 'resetall':T=buildT();TX=Object.fromEntries(T.map(t=>[t.id,t]));const r=S.role;S=fresh();S.role=r;render();toast('Demo reset');break;
+   case 'ctab':c.tab=d.v;cgo(d.v==='home'?'home':d.v);break;
+   case 'cgo':if(d.to==='checkin'&&c.screen!=='crisis'&&c.screen!=='matches')c.step=1;if(d.to==='checkin'&&c.screen==='matches')c.step=4;if(d.to==='mood')c.moodDraft=[null,null,null,null];cgo(d.to);break;
+   case 'startcheck':c.step=1;cgo('checkin');break;
+   case 'usesample':Object.assign(c.profile,JSON.parse(JSON.stringify(SAMPLE)));c.step=4;cgo('checkin');break;
+   case 'cstep':c.step=+d.v;cgo('checkin');break;
+   case 'concern':{const i=p.concerns.indexOf(d.id);if(i>=0)p.concerns.splice(i,1);else if(p.concerns.length<3)p.concerns.push(d.id);else toast('You can pick up to 3. Tap one to remove it.');render();break}
+   case 'mood':p.mood[+d.i]=+d.v;render();break;
+   case 'safety':p.safetyAns=d.v;p.safety=d.v==='no'?'no':'yes';render();break;
+   case 'pref':{const i=+d.i,v=+d.v;if(p.styleSet[i]&&p.style[i]===v){p.styleSet[i]=false;p.style[i]=3;p.matters[i]=false}else{p.style[i]=v;p.styleSet[i]=true;if(v===3)p.matters[i]=false}render();break}
+   case 'matter':p.matters[+d.i]=!p.matters[+d.i];render();break;
+   case 'gender':p.gender=d.v;render();break;
+   case 'moodnext':if(p.safety==='yes')cgo('crisis');else{c.step=3;cgo('checkin')}break;
+   case 'crisiscall':c.crisis='called';render();break;
+   case 'crisiscall2':toast('Connecting you to an on-call counsellor (simulated)');break;
+   case 'mode':p.mode=d.v;render();break;
+   case 'back':{const i=p.backs.indexOf(d.v);i>=0?p.backs.splice(i,1):p.backs.push(d.v);render();break}
+   case 'findmatch':c.results=runMatch(p,c.exclude);cgo('matching');break;
+   case 'viewt':c.view=d.id;c.slot=null;cgo('profile');if(d.book)setTimeout(()=>document.getElementById('book')?.scrollIntoView({behavior:'smooth'}),50);break;
+   case 'slot':c.slot=d.v;render();break;
+   case 'book':book();break;
+   case 'join':cgo('room');break;
+   case 'endsession':{const n=c.bk.n;c.past.push({tid:c.bk.tid,n});c.bk.n=n+1;c.bk.d+=7;
+     c.bk.pending=n<=2?'fit':(n%3===0?'mood':null);c.fit={};c.moodDraft=[null,null,null,null];if(c.bk.pending==='fit')cgo('fit');else if(c.bk.pending==='mood')cgo('mood');else cgo('home');break}
+   case 'fit':c.fit[d.k]=+d.v;render();break;
+   case 'fitsubmit':{const f=c.fit,avg=(f.heard+f.goals+f.approach+f.overall)/4,low=f.overall<=2||avg<3,session=c.bk.n-1;c.fitLog.push({session,avg,low,f:{...f}});c.bk.pending=null;
+     const t=TX[c.bk.tid];t.fit=(t.fit*20+avg)/21;
+     if(low){const lowK=Object.entries(f).sort((a,b)=>a[1]-b[1])[0][0];const pref=p.style.map((v,i)=>v<=2?STYLEQ[i].a[0]:v>=4?STYLEQ[i].a[1]:null).filter(Boolean)[0];
+       S.events.push({type:'tip',tid:t.id,session,text:{heard:'Riya may need more space to talk before moving to solutions.',goals:'Check what Riya wants from sessions; she may feel you’re working on something else.',approach:`Riya leans toward “${(pref||'a different approach').toLowerCase()}”. Consider adjusting how you work with her.`,overall:'Ask Riya openly how the sessions feel so far.'}[lowK]});
+       if(session>=2&&c.fitLog.filter(x=>x.low).length>=2){c.bk.offerSwitch=true;cgo('home');break}}
+     cgo('fitthanks');break}
+   case 'keep':c.bk.offerSwitch=false;render();break;
+   case 'mood2':c.moodDraft[+d.i]=+d.v;render();break;
+   case 'moodsubmit':c.moodLog.push({s:c.bk.n-1,v:moodScore(c.moodDraft)});c.bk.pending=null;cgo('progress');break;
+   case 'reason':c.switchReason=c.switchReason===d.v?null:d.v;render();break;
+   case 'doswitch':{const t=TX[c.bk.tid];c.exclude.push(t.id);const rs=c.switchReason;
+     const map={tools:[0,1],explore:[0,5],lead:[1,5],gentle:[3,1]};if(map[rs]){p.style[map[rs][0]]=map[rs][1];p.matters[map[rs][0]]=true}
+     else{let gi=0,g=-1;p.style.forEach((u,i)=>{const x=Math.abs(u-t.style[i]);if(x>g){g=x;gi=i}});p.matters[gi]=true}
+     c.switching=true;c.results=runMatch(p,c.exclude);cgo('matching');break}
+   case 'tview':S.t.view=d.v;render();window.scrollTo({top:0});break;
+   case 'openclient':S.t.client=d.id;S.t.view='client';render();window.scrollTo({top:0});break;
+   case 'tself':me().selfStyle[+d.i]=+d.v;render();break;
+   case 'verify':S.t.pending=[...(S.t.pending||[]),d.c];render();toast('Certificate sent for review');break;
+   case 'cap':{const t=me();t.cap=Math.max(1,Math.min(20,t.cap+ +d.v));render();break}
+   case 'cell':{const t=me();t.open.has(d.k)?t.open.delete(d.k):t.open.add(d.k);render();break}
+  }
+});
+document.addEventListener('keydown',e=>{if((e.key==='Enter')&&e.target.matches('tr[data-act]'))e.target.click()});
+document.addEventListener('input',e=>{const el=e.target,b=el.dataset.bind;if(!b)return;
+  if(b==='style')S.c.profile.style[+el.dataset.i]=+el.value;
+  if(b==='note')S.t.notes[el.dataset.id]=el.value;
+  if(b==='tstyle'){me().selfStyle[+el.dataset.i]=+el.value;const m=el.parentElement.querySelector('.bar b');if(m)m.style.left=(el.value-1)*25+'%'}});
+document.addEventListener('change',e=>{const el=e.target,b=el.dataset.bind;if(!b)return;const p=S.c.profile;
+  if(b==='matters')p.matters[+el.dataset.i]=el.checked;
+  if(b==='lang')p.lang=el.value;
+  if(b==='share')S.c.share=el.checked;});
+render();
+</script>
+
+</body>
+</html>
