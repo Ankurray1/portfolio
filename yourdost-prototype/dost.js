@@ -179,7 +179,7 @@ self.onmessage = async ({ data }) => {
     try {
       let gpu = false;
       try { gpu = !!(self.navigator.gpu && await self.navigator.gpu.requestAdapter()); } catch {}
-      const model = gpu ? 'onnx-community/whisper-base' : 'Xenova/whisper-tiny';
+      const model = gpu ? 'onnx-community/whisper-base' : 'Xenova/whisper-base';   // base: far better with Indian accents than tiny
       const files = {};
       asr = await pipeline('automatic-speech-recognition', model, {
         device: gpu ? 'webgpu' : 'wasm',
@@ -190,6 +190,7 @@ self.onmessage = async ({ data }) => {
             self.postMessage({ type: 'progress', pct: t ? Math.round(l / t * 100) : 0 }); }
         },
       });
+      try { await asr(new Float32Array(16000), { language: 'english' }); } catch {}   // warm-up, so the first real answer isn't slow
       self.postMessage({ type: 'ready', device: gpu ? 'webgpu' : 'wasm', model });
     } catch (e) { self.postMessage({ type: 'error', error: String(e && e.message || e) }); }
   }
@@ -334,7 +335,7 @@ function browserSay(text, lang) {
     if (v) u.voice = v;
     u.onend = u.onerror = () => res();
     speechSynthesis.speak(u);
-    setTimeout(res, 2500 + text.length * 90); // some browsers never fire onend
+    setTimeout(res, 4000 + text.length * 110); // some browsers never fire onend
   });
 }
 function audioCtx() {
@@ -358,48 +359,58 @@ async function micOn() {
   } catch (e) { V.micOk = false; console.warn('mic', e); return false; }
 }
 let REC = null;
+/* end of speech: learn the room's noise from quiet moments only, start on a clear voice, allow natural pauses */
 function onFrame(d, sr) {
   let sum = 0; for (let i = 0; i < d.length; i++) sum += d[i] * d[i];
   const rms = Math.sqrt(sum / d.length), ms = d.length / sr * 1000;
   V.level = V.level * 0.7 + rms * 0.3; paintLevel();
   if (!REC) return;
-  REC.pre.push(new Float32Array(d)); if (REC.pre.length > Math.ceil(400 / ms)) REC.pre.shift();
+  REC.pre.push(new Float32Array(d)); if (REC.pre.length > Math.ceil(600 / ms)) REC.pre.shift();
   REC.t += ms;
-  if (REC.t < 350) { REC.floor = Math.max(REC.floor, rms); return; }    // learn the room's noise
-  const th = Math.max(0.012, REC.floor * 2.6);
-  if (rms > th) { if (!REC.started) { REC.started = true; REC.chunks.push(...REC.pre); } REC.speech += ms; REC.silence = 0; }
-  else if (REC.started) REC.silence += ms;
-  if (REC.started) REC.chunks.push(new Float32Array(d));
-  if (REC.started && REC.speech > 350 && REC.silence > 1300) return endRec(true, sr);
-  if (REC.started && REC.t > 25000) return endRec(true, sr);
-  if (!REC.started && REC.t > 9000) return endRec(false, sr);
+  if (!REC.started) {
+    if (rms < 0.02) REC.floor = REC.floor ? REC.floor * 0.95 + rms * 0.05 : rms;      // noise floor from quiet frames only
+    const th = Math.max(0.008, Math.min(0.03, (REC.floor || 0.004) * 3));
+    if (REC.t > 150 && rms > th) { REC.loud += ms; if (REC.loud >= 120) { REC.started = true; REC.th = th; REC.chunks.push(...REC.pre); } }
+    else REC.loud = 0;
+    if (REC.t > 20000) return endRec(false, sr);                                       // nothing said for 20 s
+    return;
+  }
+  REC.chunks.push(new Float32Array(d));
+  if (rms > REC.th * 0.55) { REC.speech += ms; REC.silence = 0; } else REC.silence += ms;   // lower bar to keep going
+  if (REC.speech > 300 && REC.silence > 1700) return endRec(true, sr);                 // a natural pause is fine; 1.7 s ends the turn
+  if (REC.t > 30000) return endRec(true, sr);
 }
 async function listen() {
   if (D.mode !== 'voice' || V.speaking || D.busy || D.done) return;
   if (!(await micOn())) { D.mode = 'text'; toast('Mic is blocked. You can type instead.'); render(); return; }
   if (V.asr !== 'ready') { paintStatus(); return; }               // listening starts once Whisper is ready
-  REC = { pre: [], chunks: [], t: 0, floor: 0, started: false, speech: 0, silence: 0 };
+  await new Promise(r => setTimeout(r, 250));                       // let Dost's last word fade so the mic doesn't hear it
+  if (V.speaking || D.busy || D.done || V.listening) return;
+  REC = { pre: [], chunks: [], t: 0, floor: 0, th: 0.01, loud: 0, started: false, speech: 0, silence: 0 };
   V.listening = true; paintStatus();
 }
 function stopListening(discard) { if (REC && !discard) endRec(true, audioCtx().sampleRate); REC = null; V.listening = false; paintStatus(); }
 async function endRec(keep, sr) {
   const r = REC; REC = null; V.listening = false; paintStatus();
-  if (!keep || !r || !r.started) { paintStatus('Tap the mic when you’re ready'); return; }
+  if (!keep || !r || !r.started) { paintStatus('Tap the circle when you’re ready to talk'); return; }
   const n = r.chunks.reduce((a, c) => a + c.length, 0), pcm = new Float32Array(n);
   let o = 0; for (const c of r.chunks) { pcm.set(c, o); o += c.length; }
   const audio = resample(pcm, sr, 16000);
   V.thinking = true; paintStatus(); paintCaption('…');
   const id = ++V._id;
   const text = await new Promise(res => { V._jobs.set(id, res); V._asrW.postMessage({ type: 'transcribe', id, audio, lang: D.lang === 'hi' ? 'hindi' : 'english' }, [audio.buffer]); });
-  V.thinking = false; paintCaption('');
+  V.thinking = false; paintCaption(text ? '“' + text.trim() + '”' : '');
   const t = (text || '').replace(/\[[^\]]*\]|\([^)]*\)/g, '').trim();
-  if (!t || /^(thank you|thanks for watching|you|bye)[.!]?$/i.test(t)) { paintStatus('Sorry, I didn’t catch that. Tap the mic to try again.'); return; }
+  if (!t || /^(thanks for watching|you|bye|\.+)[.!]?$/i.test(t)) { paintCaption(''); paintStatus('Sorry, I didn’t catch that. Try again, a little closer to the mic.'); setTimeout(listen, 1200); return; }
   send(t);
 }
 function resample(x, from, to) {
   if (from === to) return x;
   const ratio = from / to, n = Math.floor(x.length / ratio), y = new Float32Array(n);
-  for (let i = 0; i < n; i++) { const p = i * ratio, a = Math.floor(p), f = p - a; y[i] = x[a] * (1 - f) + (x[a + 1] ?? x[a]) * f; }
+  for (let i = 0; i < n; i++) {                       // average each window: a simple low-pass before downsampling
+    const a = Math.floor(i * ratio), b = Math.min(x.length, Math.max(a + 1, Math.floor((i + 1) * ratio)));
+    let sum = 0; for (let j = a; j < b; j++) sum += x[j]; y[i] = sum / (b - a);
+  }
   return y;
 }
 function micOff() {
@@ -718,7 +729,7 @@ document.addEventListener('click', e => {
     case 'd-check': checkAnswer(v, a.textContent.trim()); break;
   }
 });
-window.__dostVoice = { V, loadVoice, resample, CACHE, synth }; // for diagnostics in the console
+window.__dostVoice = { V, loadVoice, resample, CACHE, synth, onFrame, listen }; // for diagnostics in the console
 window.addEventListener('pagehide', micOff);
 document.addEventListener('click', e => { if (e.target.closest('[data-act="resetall"]')) { stopSpeaking(); micOff(); Object.assign(D, { mode: null, msgs: [], state: blank(), chips: [], busy: false, done: false, live: null, result: null, plan: null, check: null, closing: null, coach: null }); setTimeout(render, 0); } }, true);
 /* ---------------- prototype: test scenarios (each one runs a full Dost chat) ---------------- */
