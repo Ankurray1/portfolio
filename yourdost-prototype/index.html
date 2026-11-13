@@ -98,7 +98,7 @@ main{padding-block:6px 48px}
 .pbody{flex:1;padding:20px 18px 24px;display:grid;gap:16px;align-content:start}
 .phead{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .iconbtn{width:38px;height:38px;border-radius:50%;border:0;background:var(--surface-2);display:grid;place-items:center;font-size:16px}
-.tabbar{position:sticky;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);border-radius:0 0 38px 38px;padding:8px 10px calc(10px + env(safe-area-inset-bottom,0px))}
+.tabbar{position:sticky;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:1px solid var(--line);border-radius:0 0 38px 38px;padding:8px 10px calc(10px + env(safe-area-inset-bottom,0px))}
 .tabbar button{border:0;background:none;padding:8px 4px;border-radius:14px;font-size:12px;color:var(--muted);display:grid;justify-items:center;gap:2px}
 .tabbar button[aria-current="page"]{color:var(--ink);font-weight:600;background:var(--surface-2)}
 .tabbar svg{width:20px;height:20px}
@@ -188,6 +188,29 @@ tr.click{cursor:pointer} tr.click:hover td{background:var(--surface-2)}
 .meter{height:8px;border-radius:8px;background:var(--line);overflow:hidden}
 .meter i{display:block;height:100%;background:var(--green)}
 
+
+/* catalogue (Task 3) */
+.center{text-align:center}
+.segs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.segs button{border:0;border-radius:999px;padding:7px 12px;background:var(--surface-2);font-size:13px;white-space:nowrap}
+.segs button[aria-pressed="true"]{background:var(--primary);color:var(--on-primary);font-weight:600}
+.libcard{display:flex;gap:12px;align-items:center;width:100%;text-align:left;border:0;border-radius:var(--r-lg);background:var(--surface-2);padding:12px 14px}
+.libcard b{display:block;font-size:14px}.libcard span{font-size:12.5px;color:var(--muted)}
+.libcard .dot,.tile4 .dot{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;flex:none;font-size:16px}
+.k-assessment{background:color-mix(in srgb,var(--sky) 28%,var(--surface));color:var(--ink)}
+.k-selfhelp{background:var(--primary-soft);color:var(--lime-ink)}
+.k-program{background:color-mix(in srgb,var(--amber) 28%,var(--surface));color:var(--ink)}
+.k-counsellor{background:color-mix(in srgb,var(--rose) 22%,var(--surface));color:var(--ink)}
+.grid4{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile4{border:0;border-radius:var(--r-lg);background:var(--surface-2);padding:13px;text-align:left;display:grid;gap:6px}
+.tile4 b{font-size:14px}.tile4 span:last-child{font-size:12px;color:var(--muted)}
+.opt2{border:0;border-radius:var(--r-lg);background:var(--surface-2);padding:14px;text-align:left;font-size:14.5px;font-weight:500}
+.opt2:hover{box-shadow:inset 0 0 0 2px var(--primary)}
+.big-ic{width:70px;height:70px;border-radius:50%;display:grid;place-items:center;font-size:28px;background:var(--primary-soft);color:var(--green-deep)}
+.scen{position:absolute;right:0;top:44px;z-index:30;background:var(--surface);border-radius:18px;box-shadow:0 20px 40px -12px rgba(0,0,0,.3);padding:8px;width:min(340px,calc(100vw - 32px));display:grid;gap:4px}
+.scen button{border:0;background:none;text-align:left;padding:9px 11px;border-radius:12px;font-size:13.5px}
+.scen button:hover{background:var(--surface-2)}
+.scen span{display:block;font-size:12px;color:var(--muted)}
 /* Dost voice guide (Task 3) */
 .dost-stage{display:grid;justify-items:center;gap:8px;padding:4px 0}
 .dost-orb{position:relative;width:132px;height:132px;border-radius:50%;border:0;padding:0;background:radial-gradient(circle at 38% 32%,#f2f6f2 0%,#a7cab7 38%,#5c9a8a 70%,#3f7d6d 100%);box-shadow:0 18px 40px -18px rgba(47,97,89,.7);transition:transform .4s ease}
@@ -233,6 +256,7 @@ tr.click{cursor:pointer} tr.click:hover td{background:var(--surface-2)}
 <div class="proto"><div class="wrap">
   <div class="who"><span class="mark" aria-hidden="true"></span><span><b style="color:var(--ink)">YourDOST</b> · Dost voice guide (Task 3) + Smart Matching (Task 2) · prototype, fictional data</span><span class="tag" id="aistat" hidden></span></div>
   <div class="seg" role="group" aria-label="Which app to view" id="roleSeg"></div>
+  <span style="position:relative"><button class="btn ghost sm" id="scenBtn">Test scenarios ▾</button></span>
   <button class="btn ghost sm" data-act="resetall">Reset demo</button>
 </div></div>
 <main class="wrap" id="view"></main>
@@ -357,7 +381,7 @@ function chartSVG(series,{h=170,showBand=true}={}){
    <polyline points="${series.map(s=>X(s.s)+','+Y(s.v)).join(' ')}" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linejoin="round"/>
    ${series.map(s=>`<circle cx="${X(s.s)}" cy="${Y(s.v)}" r="5" fill="var(--green)"/><text x="${X(s.s)}" y="${Y(s.v)-9}" font-size="11.5" text-anchor="middle" font-weight="600" fill="var(--ink)">${s.v}</text><text x="${X(s.s)}" y="${h-6}" font-size="11" text-anchor="middle" fill="var(--muted)">S${s.s}</text>`).join('')}
   </svg></div>`}
-const ICON={home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/></svg>',sessions:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>',progress:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18l5-6 4 3 7-9"/></svg>',help:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-8-5-8-11a4.5 4.5 0 018-3 4.5 4.5 0 018 3c0 6-8 11-8 11z"/></svg>'};
+const ICON={explore:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M15 9l-2 5-4 1 2-5z"/></svg>',home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9H4z"/></svg>',sessions:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>',progress:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18l5-6 4 3 7-9"/></svg>',help:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-8-5-8-11a4.5 4.5 0 018-3 4.5 4.5 0 018 3c0 6-8 11-8 11z"/></svg>'};
 
 /* ======================= ROOT ======================= */
 function render(){
@@ -370,7 +394,7 @@ function render(){
 function clientApp(){
   const c=S.c;const scr=CS[c.screen]||CS.home;
   const showTabs=!['checkin','crisis','matching','room','fit','mood'].includes(c.screen);
-  return `<div class="phone"><div class="pbody">${scr()}</div>${showTabs?`<nav class="tabbar" aria-label="Client app">${[['home','Home'],['sessions','Sessions'],['progress','Progress'],['help','Get help']].map(([k,l])=>`<button data-act="ctab" data-v="${k}" ${c.tab===k&&['home','sessions','progress','help'].includes(c.screen)?'aria-current="page"':''}>${ICON[k]}${l}</button>`).join('')}</nav>`:''}</div>`;
+  return `<div class="phone"><div class="pbody">${scr()}</div>${showTabs?`<nav class="tabbar" aria-label="Client app">${[['home','Home'],['explore','Explore'],['sessions','Sessions'],['progress','Progress'],['help','Get help']].map(([k,l])=>`<button data-act="ctab" data-v="${k}" ${c.tab===k&&['home','explore','sessions','progress','help'].includes(c.screen)?'aria-current="page"':''}>${ICON[k]}${l}</button>`).join('')}</nav>`:''}</div>`;
 }
 const back=(to,label='Back')=>`<button class="iconbtn" data-act="cgo" data-to="${to}" aria-label="${label}">←</button>`;
 const CS={
@@ -603,7 +627,7 @@ function spark(m){if(!m.length)return '<span class="tiny muted">—</span>';if(m
   return `<svg viewBox="0 0 ${W2} ${H2}" width="${W2}" height="${H2}" aria-label="${xs.join(' to ')}"><polyline points="${pts}" fill="none" stroke="${d>=3?'var(--rose)':'var(--green)'}" stroke-width="2"/></svg> <span class="tiny muted">${xs[0]}→${xs[xs.length-1]}</span>`}
 
 /* ======================= EVENTS ======================= */
-function cgo(s){S.c.screen=s;if(['home','sessions','progress','help'].includes(s))S.c.tab=s;render();window.scrollTo({top:0})}
+function cgo(s){S.c.screen=s;if(['home','explore','sessions','progress','help'].includes(s))S.c.tab=s;render();window.scrollTo({top:0})}
 function book(){const c=S.c,t=TX[c.view];const [d,h]=c.slot.split('-').map(Number);
   if(c.bk){S.events.push({type:'moved',tid:c.bk.tid});const old=TX[c.bk.tid];old.load=Math.max(0,old.load-1)}
   t.open.delete(c.slot);t.load+=1;c.bk={tid:t.id,d,h,n:1};c.fitLog=[];c.switching=false;
@@ -671,6 +695,7 @@ document.addEventListener('change',e=>{const el=e.target,b=el.dataset.bind;if(!b
   if(b==='share')S.c.share=el.checked;});
 render();
 </script>
+<script src="catalog.js"></script>
 <script src="dost.js"></script>
 </body>
 </html>

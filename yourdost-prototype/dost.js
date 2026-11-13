@@ -57,7 +57,7 @@ function safetyAns(t) {
   if (/^(no|nope|never|not really|nahi|bilkul nahi|नहीं)\b/.test(x)) return 'no';
   return null;
 }
-const tagsFrom = t => Object.keys(TAGRE).filter(k => TAGRE[k].test(t)).slice(0, 3);
+const tagsFrom = t => Object.keys(TAGRE).map(k => [k, t.search(TAGRE[k])]).filter(x => x[1] >= 0).sort((x, y) => x[1] - y[1]).map(x => x[0]).slice(0, 3); // first-mentioned first
 const nextKey = s => ORDER.find(k => k === 'concern' ? !s.concern : k === 'safety' ? s.safety === null : s.items[+k[1]] === null) || null;
 function decide(s) {
   const score = s.items.reduce((a, b) => a + (b ?? 0), 0);
@@ -88,20 +88,6 @@ function localTurn(s0, text) {
   s.asked = n;
   return { state: s, say: prefix + Q[n].ask, chips: Q[n].chips, done: false };
 }
-
-/* ---------------- programs (fictional YourDOST catalogue) ---------------- */
-const PROGRAMS = {
-  work: { name: 'Calm at Work', blurb: 'Small daily habits to switch off after work' },
-  sleep: { name: 'Sleep Reset', blurb: 'A wind-down routine for calmer nights' },
-  low: { name: 'Lift', blurb: 'Gentle daily steps to lift a low mood' },
-  anx: { name: 'Untangle Worry', blurb: 'Simple tools to quiet a racing mind' },
-  rel: { name: 'Better Connections', blurb: 'Feel closer and argue less' },
-  family: { name: 'Better Connections', blurb: 'Feel closer and argue less' },
-  lonely: { name: 'Better Connections', blurb: 'Small steps to feel less alone' },
-  exams: { name: 'Focus & Calm', blurb: 'Study without the panic' },
-  career: { name: 'Focus & Calm', blurb: 'Clear your head about what’s next' },
-};
-const progFor = tags => PROGRAMS[tags[0]] || { name: 'Calm Basics', blurb: 'Five minutes a day to feel steadier' };
 
 /* =====================================================================
    VOICE ENGINE (on-device, open source)
@@ -403,8 +389,8 @@ function profileFromDost() {
   return p;
 }
 function buildPlan() {
-  const pr = D.result.priority, p = profileFromDost(), prog = progFor(p.concerns);
-  const plan = { priority: pr, prog, concerns: p.concerns, summary: D.state.concern, booked: false, day: 0, quick: false };
+  const pr = D.result.priority, p = profileFromDost();
+  const plan = { priority: pr, ex: CAT.exerciseFor(p.concerns), pg: CAT.programFor(p.concerns), concerns: p.concerns, summary: D.state.concern, booked: false, quick: false, score: D.result.score };
   if (pr === 'high') {
     const pool = T.filter(t => t.clinical && t.langs.includes(p.lang)).sort((a, b) => a.load / a.cap - b.load / b.cap);
     plan.oncall = (pool[0] || T.find(t => t.clinical) || T[0]).id;
@@ -469,13 +455,18 @@ CS.dostplan = () => {
   const t = P.tid ? TX[P.tid] : null;
   const step = (n, when, what, sub, btn, done) => `<div class="pstep ${done ? 'done' : ''}"><span class="pnum">${done ? '✓' : n}</span><div style="flex:1;min-width:0"><span class="lbl">${when}</span><b>${what}</b>${sub ? `<div class="tiny muted">${sub}</div>` : ''}${btn || ''}</div></div>`;
   const steps = [step('✓', 'Done', 'Check-in with Dost', 'Your answers stay private', '', true)];
+  const X = CAT.EX[P.ex], G = CAT.PG[P.pg], day = CAT.prog().pg[P.pg] || 0;
+  const exBtn = `<button class="btn sm" style="margin-top:8px" data-act="c-ex" data-id="${P.ex}">${P.quick ? 'Do it again' : 'Start now'}</button>`;
+  const pgBtn = `<button class="btn sm" style="margin-top:8px" data-act="c-pg" data-id="${P.pg}">${day ? 'Continue' : 'Start day 1'}</button>`;
   if (P.priority === 'medium') {
-    steps.push(step(1, 'Now · 5 minutes', 'Calm reset', 'A short breathing exercise to feel steadier', `<button class="btn sm" style="margin-top:8px" data-act="d-prog" data-v="quick">${P.quick ? 'Do it again' : 'Start'}</button>`, P.quick));
-    if (t) steps.push(step(2, 'Within 2 days', `Session with ${esc2(t.name)}`, `${t.title} · ${P.slot ? slotLabel(...P.slot.split('-').map(Number)) : 'we’ll find a time'}`, P.booked ? '' : `<button class="btn sm" style="margin-top:8px" data-act="d-book">Book this time</button> <button class="link" data-act="d-others" style="margin-left:6px">See others</button>`, P.booked));
-    steps.push(step(3, 'In 24–48 hours', 'Dost checks in', 'Not feeling better? We’ll bring your session forward.'));
+    steps.push(step(1, `Now · ${X.mins} minutes · self-help`, X.name, X.why, exBtn, P.quick));
+    if (t) steps.push(step(2, 'Within 2 days · counselling', `Session with ${esc2(t.name)}`, `${t.title} · ${P.slot ? slotLabel(...P.slot.split('-').map(Number)) : 'we’ll find a time'}`, P.booked ? '' : `<button class="btn sm" style="margin-top:8px" data-act="d-book">Book this time</button> <button class="link" data-act="d-others" style="margin-left:6px">See others</button>`, P.booked));
+    steps.push(step(3, 'While you wait · program', G.name, `${G.blurb} · ${day}/7 days done`, pgBtn, day >= 7));
+    steps.push(step(4, 'In 24–48 hours', 'Dost checks in', 'Not feeling better? We’ll bring your session forward.'));
   } else {
-    steps.push(step(1, `Today · Day ${Math.min(P.day + 1, 7)} of 7`, P.prog.name, P.prog.blurb + ' · 10 min a day', `<button class="btn sm" style="margin-top:8px" data-act="d-prog" data-v="prog">${P.day ? 'Continue' : 'Start day 1'}</button>`));
-    steps.push(step(2, 'Day 7', 'Dost checks in', 'Not better? We’ll connect you to the right counsellor.'));
+    steps.push(step(1, `Today · Day ${Math.min(day + 1, 7)} of 7 · program`, G.name, `${G.blurb} · 10 min a day`, pgBtn, day >= 7));
+    steps.push(step(2, `Anytime · ${X.mins} min · self-help`, X.name, X.why, exBtn, P.quick));
+    steps.push(step(3, 'Day 7', 'Dost checks in', 'Not better? We’ll connect you to the right counsellor.'));
   }
   return `<div class="phead">${back('home')}<span class="tag">${P.priority === 'medium' ? 'Plan · extra support' : 'Plan · light support'}</span></div>
   <div class="blob ${g}" style="display:grid;gap:8px;min-height:170px;align-content:end"><span class="lbl">Your plan, Riya</span><h1 style="color:#fff">${title}</h1><p style="color:#fff">${line}</p></div>
@@ -498,27 +489,6 @@ CS.dosthigh = () => {
   <a class="tile stack" href="tel:112" style="gap:4px;text-decoration:none;color:inherit"><b>Emergency · 112</b><span class="small muted">If you’re in danger right now.</span></a>
   <button class="btn ghost block" data-act="cgo" data-to="home">I’m safe for now</button>`;
 };
-
-let breathT = null;
-CS.dostprog = () => {
-  const P = D.plan, quick = D._prog === 'quick';
-  return `<div class="phead">${back(P ? 'dostplan' : 'home')}<span class="tag">${quick ? 'Self-help · 5 min' : `${esc2(P.prog.name)} · Day ${Math.min(P.day + 1, 7)} of 7`}</span></div>
-  <div><h2>${quick ? 'Calm reset' : 'Today: notice, don’t fix'}</h2><p class="small muted">${quick ? 'Follow the circle. Even one minute helps.' : 'Ten minutes to notice how your body and mind feel, without judging it.'}</p></div>
-  <div class="breathe"><div class="bcircle" id="bc">Breathe in</div></div>
-  <div class="dotnum" id="btime" style="text-align:center;font-size:34px">${quick ? '5:00' : '10:00'}</div>
-  <button class="btn block" data-act="d-progdone">I’m done for now</button>`;
-};
-function runBreath() {
-  clearInterval(breathT); let n = 0, left = D._prog === 'quick' ? 300 : 600;
-  const tick = () => {
-    const bc = document.getElementById('bc'), bt = document.getElementById('btime');
-    if (!bc) return clearInterval(breathT);
-    const ph = Math.floor(n / 4) % 3; bc.textContent = ['Breathe in', 'Hold', 'Breathe out'][ph]; bc.classList.toggle('big', ph !== 2);
-    if (bt) bt.textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
-    n++; left = Math.max(0, left - 1);
-  };
-  tick(); breathT = setInterval(tick, 1000);
-}
 
 /* check-in a day or two later */
 CS.dostcheck = () => {
@@ -564,7 +534,7 @@ function planTile() {
   const P = D.plan; if (!P || P.priority === 'high') return '';
   const t = P.tid ? TX[P.tid] : null;
   return `<div class="tile stack" style="gap:8px"><div class="row between"><b>Your plan from Dost</b><span class="tag ${P.priority === 'medium' ? 'amber' : 'lime'}">${P.priority === 'medium' ? 'Extra support' : 'Light support'}</span></div>
-    <span class="small">${P.priority === 'medium' ? `Calm reset${P.quick ? ' ✓' : ''} · ${t ? (P.booked ? `${esc2(first(t.name))} booked` : `book ${esc2(first(t.name))}`) : 'counsellor'} · check-in in 2 days` : `${esc2(P.prog.name)} · day ${Math.min(P.day + 1, 7)} of 7 · check-in on day 7`}</span>
+    <span class="small">${P.priority === 'medium' ? `${esc2(CAT.EX[P.ex].name)}${P.quick ? ' ✓' : ''} · ${t ? (P.booked ? `${esc2(first(t.name))} booked` : `book ${esc2(first(t.name))}`) : 'counsellor'} · check-in in 2 days` : `${esc2(CAT.PG[P.pg].name)} · ${CAT.prog().pg[P.pg] || 0}/7 days · check-in on day 7`}</span>
     <div class="row"><button class="btn sm" data-act="cgo" data-to="dostplan">Open plan</button><button class="link" data-act="d-checkin">Prototype: jump to Dost’s check-in</button></div></div>`;
 }
 CS.home = () => {
@@ -578,7 +548,13 @@ CS.home = () => {
     <div class="row"><button class="btn white" data-act="d-start" data-v="voice">${MIC} Talk to Dost</button><button class="btn" style="background:rgba(255,255,255,.22);color:#fff" data-act="d-start" data-v="text">Type instead</button></div>
     <span class="tiny" style="color:#fff;opacity:.9">Private · not a doctor · your voice stays on your phone</span>
   </div>
-  <button class="tile row between" style="border:0;text-align:left" data-act="startcheck"><div><b class="small">Know what you want?</b><p class="tiny muted">Find a therapist yourself</p></div><span class="tag">3 min</span></button>
+  <span class="lbl">Or explore on your own</span>
+  <div class="grid4">
+    <button class="tile4" data-act="c-filter2" data-v="as"><span class="dot k-assessment">✓</span><b>Assessments</b><span>3 quick checks</span></button>
+    <button class="tile4" data-act="c-filter2" data-v="ex"><span class="dot k-selfhelp">🍃</span><b>Self-help</b><span>7 exercises</span></button>
+    <button class="tile4" data-act="c-filter2" data-v="pg"><span class="dot k-program">🌱</span><b>Programs</b><span>5 seven-day paths</span></button>
+    <button class="tile4" data-act="startcheck"><span class="dot k-counsellor">💬</span><b>Counselling</b><span>Find your match</span></button>
+  </div>
   <div class="tile row between"><div><b class="small">Need to talk now?</b><p class="tiny muted">Someone is here, 24×7.</p></div><button class="btn ghost sm" data-act="ctab" data-v="help">Talk now</button></div>`;
 };
 CS.dash = () => { const html = dashTask2(); return D.plan && D.plan.priority === 'medium' ? html.replace('<div class="blob g-orange"', planTile() + '<div class="blob g-orange"') : html; };
@@ -588,7 +564,7 @@ CS.dashboard = CS.dash;
 const baseApp = clientApp;
 window.clientApp = clientApp = () => {
   const html = baseApp();
-  return ['dost', 'dostprog', 'dostcheck', 'dosthigh'].includes(S.c.screen) ? html.replace(/<nav class="tabbar"[\s\S]*?<\/nav>/, '') : html;
+  return ['dost', 'dostcheck', 'dosthigh'].includes(S.c.screen) ? html.replace(/<nav class="tabbar"[\s\S]*?<\/nav>/, '') : html;
 };
 const baseRender = render;
 window.render = render = () => {
@@ -598,7 +574,6 @@ window.render = render = () => {
     const f = document.getElementById('dform'); if (f) f.onsubmit = e => { e.preventDefault(); const i = document.getElementById('dtext'); const v = i.value; i.value = ''; send(v); };
     window.scrollTo({ top: document.body.scrollHeight });
   }
-  if (S.c.screen === 'dostprog') runBreath();
   if (S.c.screen !== 'dost' && S.c.screen !== 'dostcheck') { micOff(); }
   paintAI();
 };
@@ -616,23 +591,18 @@ document.addEventListener('click', e => {
       if (D.mode !== 'voice') { D.mode = 'voice'; loadVoice(); render(); }
       listen(); break;
     case 'd-lang': D.lang = D.lang === 'hi' ? 'en' : 'hi'; toast(D.lang === 'hi' ? 'Dost will listen in Hindi' : 'Dost will listen in English'); render(); break;
-    case 'd-prog': D._prog = v; c.screen = 'dostprog'; render(); window.scrollTo({ top: 0 }); break;
-    case 'd-progdone':
-      clearInterval(breathT);
-      if (D._prog === 'quick') P.quick = true; else P.day = Math.min(7, P.day + 1);
-      toast(D._prog === 'quick' ? 'Nice. That counts.' : `Day ${P.day} done. See you tomorrow.`);
-      c.screen = 'dostplan'; render(); break;
     case 'd-book': {
       const p = profileFromDost(); c.profile = p; c.view = P.tid; c.slot = P.slot; c.share = true; P.booked = true;
       book(); break; }
     case 'd-others': { const p = profileFromDost(); c.profile = p; c.results = P && P.results || runMatch(p, []); cgo('matching'); break; }
     case 'd-oncall': P.called = true; render(); break;
-    case 'd-nowchat': if (!P.oncall) P.oncall = (T.find(x => x.clinical && x.langs.includes('English')) || T[0]).id; P.called = true; c.screen = 'dosthigh'; render(); break;
+    case 'd-nowchat2': D.plan = { priority: 'high', concerns: [], oncall: null }; // falls through
+    case 'd-nowchat': if (!D.plan.oncall) D.plan.oncall = (T.find(x => x.clinical && x.langs.includes('English')) || T[0]).id; D.plan.called = true; c.screen = 'dosthigh'; render(); break;
     case 'd-checkin': {
       const t = P.tid ? TX[P.tid] : null;
       D.check = { msgs: [], chips: [['better', 'Better'], ['same', 'About the same'], ['worse', 'Worse']], action: '' };
       c.screen = 'dostcheck';
-      checkSay(P.priority === 'medium' ? `Hi Riya, it’s Dost. It’s been 2 days since our chat. How are you feeling now?` : `Hi Riya, it’s Dost. You’ve finished a week of ${P.prog.name}. How are you feeling now?`);
+      checkSay(P.priority === 'medium' ? `Hi Riya, it’s Dost. It’s been 2 days since our chat. How are you feeling now?` : `Hi Riya, it’s Dost. It’s been a week of ${CAT.PG[P.pg].name}. How are you feeling now?`);
       break; }
     case 'd-check': checkAnswer(v, a.textContent.trim()); break;
   }
@@ -640,6 +610,39 @@ document.addEventListener('click', e => {
 window.__dostVoice = { V, loadVoice, resample, CACHE, synth }; // for diagnostics in the console
 window.addEventListener('pagehide', micOff);
 document.addEventListener('click', e => { if (e.target.closest('[data-act="resetall"]')) { stopSpeaking(); micOff(); Object.assign(D, { mode: null, msgs: [], state: blank(), chips: [], busy: false, done: false, live: null, result: null, plan: null, check: null }); setTimeout(render, 0); } }, true);
+/* ---------------- prototype: test scenarios (each one runs a full Dost chat) ---------------- */
+const SCEN = [
+  ['Work stress, mild', 'Low → Calm at Work + Box breathing', 'Work has been stressful this month, too many deadlines.', ['Some days', 'Not at all', 'Some days', 'Some days', 'No']],
+  ['Can’t sleep, mild', 'Low → Sleep Reset + 4-7-8 wind-down', 'I can’t fall asleep, my mind keeps racing at night.', ['Not at all', 'Some days', 'Some days', 'Some days', 'No']],
+  ['Lonely in a new city', 'Low → Better Connections + One small message', 'I moved to a new city and I feel lonely, no friends here.', ['Some days', 'Some days', 'Not at all', 'Not at all', 'No']],
+  ['Career worry', 'Medium → 5-4-3-2-1 grounding + counsellor + Untangle Worry', 'I keep worrying about my career and the appraisal.', ['Some days', 'Some days', 'Most days', 'Nearly every day', 'No']],
+  ['Feeling low (Hinglish)', 'Medium → Three good things + counsellor + Lift', 'Kuch hafton se mann nahi lagta, I feel low.', ['Most days', 'Most days', 'Some days', 'Some days', 'No']],
+  ['Struggling a lot', 'High → on-call clinical psychologist now', 'Everything feels like too much and I am exhausted.', ['Nearly every day', 'Nearly every day', 'Most days', 'Most days', 'No']],
+  ['Safety words', 'High → human now, no AI call', 'Sometimes I feel like I don’t want to be here.', []],
+];
+async function runScenario(i) {
+  const [, , text, answers] = SCEN[i];
+  document.querySelector('[data-act="resetall"]').click();
+  await new Promise(r => setTimeout(r, 120));
+  S.role = 'client'; await start('text');
+  await send(text);
+  for (const a of answers) {
+    for (let k = 0; k < 80 && (D.busy || !D.chips.includes(a)) && !D.done; k++) await new Promise(r => setTimeout(r, 150));
+    if (D.done) break;
+    await send(a);
+  }
+}
+const sb = document.getElementById('scenBtn');
+if (sb) sb.onclick = ev => {
+  ev.stopPropagation();
+  const old = document.getElementById('scenMenu'); if (old) return old.remove();
+  const m = document.createElement('div'); m.className = 'scen'; m.id = 'scenMenu';
+  m.innerHTML = SCEN.map((s, i) => `<button data-i="${i}"><b>${esc2(s[0])}</b><span>${esc2(s[1])}</span></button>`).join('');
+  m.onclick = e2 => { const b = e2.target.closest('button'); if (b) { m.remove(); runScenario(+b.dataset.i); } };
+  sb.parentElement.appendChild(m);
+  setTimeout(() => document.addEventListener('click', () => m.remove(), { once: true }), 0);
+};
+window.__dostScenarios = { SCEN, runScenario };
 if (location.hash === '#dost') setTimeout(() => start('text'), 50);
 render();
 })();
